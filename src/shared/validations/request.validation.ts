@@ -1,28 +1,23 @@
-import {
-  ArgumentMetadata,
-  HttpException,
-  HttpStatus,
-  Injectable,
-  PipeTransform,
-  ValidationError,
-} from '@nestjs/common'
+import { ArgumentMetadata, HttpException, HttpStatus, Injectable, PipeTransform, ValidationError } from '@nestjs/common'
 import { getMetadataStorage, validate } from 'class-validator'
+
 import { plainToClass } from 'class-transformer'
 
 @Injectable()
 export class RequestValidation implements PipeTransform<unknown> {
   async transform(value: unknown, metadata: ArgumentMetadata) {
     if (value instanceof Object && this.isEmptyObject(value)) {
-      throw new HttpException(
-        'Validation Failed: No data submitted for body',
-        HttpStatus.BAD_REQUEST,
-      )
+      throw new HttpException('Validation Failed: No data submitted for body', HttpStatus.BAD_REQUEST)
     }
 
     const { metatype } = metadata
 
     if (!metatype || !this.toValidate(metatype)) {
       return value
+    }
+
+    if (value instanceof Object) {
+      value = this.normalizeObjectValues(value)
     }
 
     const object = plainToClass(metatype, value)
@@ -43,12 +38,7 @@ export class RequestValidation implements PipeTransform<unknown> {
   }
 
   private getValidatedValues(target: any, value: any) {
-    const targetMetadatas = getMetadataStorage().getTargetValidationMetadatas(
-      target.constructor,
-      '',
-      false,
-      false,
-    )
+    const targetMetadatas = getMetadataStorage().getTargetValidationMetadatas(target.constructor, '', false, false)
     const validatedValues: any = {}
 
     targetMetadatas.forEach(x => {
@@ -96,5 +86,39 @@ export class RequestValidation implements PipeTransform<unknown> {
 
   private isEmptyObject(value: object): boolean {
     return !Object.keys(value).length
+  }
+
+  private normalizeObjectValues(obj: Record<string, any>) {
+    Object.keys(obj).forEach(key => {
+      obj[key] = this.normalizeValue(obj[key])
+    })
+
+    return obj
+  }
+
+  private normalizeArrayValues(arr: any[]) {
+    for (let i = 0; i < arr.length; i++) {
+      arr[i] = this.normalizeValue(arr[i])
+    }
+    return arr
+  }
+
+  private normalizeValue(target: any) {
+    if (target === null) {
+      return target
+    }
+
+    if (target instanceof Array) {
+      return this.normalizeArrayValues(target)
+    }
+
+    switch (typeof target) {
+      case 'object':
+        return this.normalizeObjectValues(target)
+      case 'string':
+        return target.trim()
+    }
+
+    return target
   }
 }

@@ -1,18 +1,10 @@
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-} from '@nestjs/common'
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException } from '@nestjs/common'
 import { Request, Response } from 'express'
 import { ApiResponse } from '../contracts'
 import { UseLogger } from '../contracts/logger.contract'
 
 @Catch(HttpException)
-export class HttpErrorFilter
-  extends UseLogger
-  implements ExceptionFilter<HttpException>
-{
+export class HttpErrorFilter extends UseLogger implements ExceptionFilter<HttpException> {
   protected name: string = HttpErrorFilter.name
 
   public catch(exception: HttpException, host: ArgumentsHost) {
@@ -37,11 +29,8 @@ export class HttpErrorFilter
       },
     }
 
-    this.log.error(
-      JSON.stringify(errorResponse),
-      `${request.method} ${request.url}`,
-    )
+    this.log.error(JSON.stringify(errorResponse), `${request.method} ${request.url}`)
 
-    response.status(status).json(errorResponse)
+    return response.status(status).send(errorResponse)
   }
 }

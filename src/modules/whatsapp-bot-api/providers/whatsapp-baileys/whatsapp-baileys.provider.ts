@@ -1,20 +1,26 @@
-import { ProviderContract, delayWithCallback, stringToBase64 } from 'src/shared'
 import {
+  IWhatsappBaileysSession,
   WhatsappBaileysConfig,
   WhatsappBaileysError,
-  WhatsappBaileysSession,
   WhatsappBaileysSessionId,
   WhatsappBaileysSessionStatus,
+  WhatsappBaileysSocket,
 } from './whatsapp-baileys.dto'
+import { ProviderContract, delayWithCallback, stringToBase64 } from 'src/shared'
 import { existsSync, rmSync } from 'fs'
 import makeWASocket, {
   Browsers,
   DisconnectReason,
+  MessageRetryMap,
   UserFacingSocketConfig,
+  fetchLatestBaileysVersion,
   useMultiFileAuthState,
+  Contact,
 } from '@adiwajshing/baileys'
 import { Boom } from '@hapi/boom'
+import { ConfigService } from '@nestjs/config'
 import { Injectable } from '@nestjs/common'
+import { WhatsappBaileysSession } from './whatsapp-baileys.session'
 import { toDataURL } from 'qrcode'
 
 @Injectable()
@@ -23,14 +29,16 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
 
   private _retries: Map<WhatsappBaileysSessionId, number> = new Map()
   private _sessions: Map<WhatsappBaileysSessionId, WhatsappBaileysSession> = new Map()
+  private _msgRetryCounterMap: MessageRetryMap = {}
 
-  public constructor() {
+  public constructor(private envService: ConfigService) {
     super({
-      SESSION_PATH: 'storage/whatsapp-sessions',
-      STORE_PATH: 'storage/whatsapp-stores',
-      MAX_RETRIES: 1,
-      QR_TIMEOUT: 30e3,
-      RECONNECT_INTERVAL: 3e3,
+      SESSION_PATH: envService.get<string>('WA_SESSION_PATH', 'storage/whatsapp-sessions'),
+      STORE_PATH: envService.get<string>('WA_STORE_PATH', 'storage/whatsapp-stores'),
+      MAX_RETRIES: envService.get<number>('WA_MAX_RETRIES', 1),
+      QR_TIMEOUT: envService.get<number>('WA_QR_TIMEOUT', 30e3),
+      QR_PRINT_TO_TERMINAL: envService.get<boolean>('WA_QR_PRINT_TO_TERMINAL', false),
+      RECONNECT_INTERVAL: envService.get<number>('WA_RECONNECT_INTERVAL', 3e3),
     })
   }
 
@@ -47,14 +55,25 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
 
     const { state, saveCreds } = await useMultiFileAuthState(sessionFilepath)
 
+    // fetch latest version of WA Web
+    const { version, isLatest } = await fetchLatestBaileysVersion()
+    this.log.info(`using WA v${version.join('.')}, isLatest: ${isLatest}`)
+
     const options: UserFacingSocketConfig = {
       ...this.getDefaultSocketConfig(),
       auth: state,
+      version,
+      msgRetryCounterMap: this._msgRetryCounterMap,
     }
 
     const socket = makeWASocket(options)
 
     await socket.waitForSocketOpen()
+
+    this.log.debug('Socket opened!')
+
+    this.setSession(sessionId, { socket })
+    this.log.debug(`[${sessionId}] Session saved!`)
 
     socket.ev.on('creds.update', saveCreds)
 
@@ -62,32 +81,50 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
       id: WhatsappBaileysSessionId
       connected: boolean
       status: WhatsappBaileysSessionStatus
+      user?: Contact
       qr?: { type: 'base64'; data: string; timeout: number }
     }>(resolve => {
       socket.ev.on('connection.update', async update => {
-        const { connection, lastDisconnect, qr } = update
+        const { connection, lastDisconnect, qr, isNewLogin } = update
 
         const statusCode: DisconnectReason = (lastDisconnect?.error as Boom)?.output?.statusCode
 
         const isLoggedOut = statusCode === DisconnectReason.loggedOut
         const isRestartRequired = statusCode === DisconnectReason.restartRequired
+        const isConnectionClosed = statusCode === DisconnectReason.connectionClosed
         const isSessionEnd = (statusCode as any) === WhatsappBaileysError.SESSION_END_ERROR
 
         const reconnectInterval = isRestartRequired ? 0 : this.config.RECONNECT_INTERVAL
 
         let isShouldReconnect
 
+        if (isNewLogin) {
+          this.log.debug(`[${sessionId}] New login: ${isNewLogin}`)
+          const newSession = this.getSession(sessionId)
+          if (newSession) {
+            newSession.isNew = true
+            this.setSession(sessionId, newSession)
+          }
+        }
+
         switch (connection) {
           case 'open':
             this.log.debug(`[${sessionId}] Connection opened`)
 
-            this._sessions.set(sessionId, { ...socket })
             this._retries.delete(sessionId)
+
+            const session = this.getSession(sessionId)
+            if (session && session.isNew) {
+              session.isNew = false
+              this.setSession(sessionId, session)
+              delayWithCallback(2000, this.endSession.bind(this, sessionId))
+            }
 
             return resolve({
               id: sessionId,
               status: WhatsappBaileysSessionStatus.READY,
               connected: true,
+              user: await this.resolveUserSession(socket),
             })
           case 'close':
             this.log.debug(`[${sessionId}] Connection closed`)
@@ -97,12 +134,13 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
                 id: sessionId,
                 status: WhatsappBaileysSessionStatus.READY,
                 connected: true,
+                user: await this.resolveUserSession(socket),
               })
             }
 
             isShouldReconnect = this.shouldReconnect(sessionId)
 
-            if (isLoggedOut || !isShouldReconnect) {
+            if (isConnectionClosed || isLoggedOut || !isShouldReconnect) {
               this.deleteSession(sessionId)
               return resolve({
                 id: sessionId,
@@ -119,6 +157,8 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
         }
 
         if (qr) {
+          this.log.debug(`[${sessionId}] Scan QR required!`)
+
           const qrCodeUrl = await toDataURL(qr)
 
           return resolve({
@@ -136,10 +176,24 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
     })
   }
 
-  public async getSession(sessionId: WhatsappBaileysSessionId): Promise<WhatsappBaileysSession | undefined> {
+  public getSession(sessionId: WhatsappBaileysSessionId): WhatsappBaileysSession | undefined {
+    const runningSession = this._sessions.get(sessionId)
+    if (!runningSession) {
+      return
+    }
+    return runningSession
+  }
+
+  public async getSessionOrReconnect(sessionId: WhatsappBaileysSessionId): Promise<WhatsappBaileysSession | undefined> {
+    const session = this.getSession(sessionId)
+    if (session) {
+      return session
+    }
+
     const sessionFilepath = this.resolveSessionPath(sessionId)
 
     if (!existsSync(sessionFilepath)) {
+      this.log.debug(`Session path: ${sessionFilepath} is not exists.`)
       return
     }
 
@@ -149,17 +203,20 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
       return
     }
 
-    return this._sessions.get(sessionId)
+    return this.getSession(sessionId)
   }
 
   public endSession(sessionId: WhatsappBaileysSessionId): void {
-    const session = this._sessions.get(sessionId)
+    this.log.debug(`[${sessionId}] End session`)
+    const session = this.getSession(sessionId)
 
     if (!session) {
       return
     }
 
-    session.end(
+    this.log.debug(`[${sessionId}] Session ended!`)
+
+    session.socket.end(
       new Boom('Session saved and closed.', {
         statusCode: parseInt(WhatsappBaileysError.SESSION_END_ERROR.toString()),
       }),
@@ -174,6 +231,8 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
 
     this._sessions.delete(sessionId)
     this._retries.delete(sessionId)
+
+    this.log.debug(`[${sessionId}] Session deleted!`)
   }
 
   public shouldReconnect(sessionId: WhatsappBaileysSessionId): boolean {
@@ -183,6 +242,7 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
     if (attempts < maxRetries) {
       ++attempts
 
+      this.log.debug(`[${sessionId}] Reconnect Required. Attempts: ${attempts}/${maxRetries}`)
       this._retries.set(sessionId, attempts)
 
       return true
@@ -191,10 +251,37 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
     return false
   }
 
+  protected setSession(sessionId: WhatsappBaileysSessionId, data: Partial<IWhatsappBaileysSession>) {
+    const { socket } = data
+    if (!socket) {
+      return
+    }
+    let session = this.getSession(sessionId)
+    if (!session) {
+      session = new WhatsappBaileysSession(data as IWhatsappBaileysSession)
+      this._sessions.set(sessionId, session)
+    }
+
+    session.syncData(data as IWhatsappBaileysSession)
+    this._sessions.set(sessionId, session)
+  }
+
+  protected async resolveUserSession(socket: WhatsappBaileysSocket) {
+    const user = socket.user
+    return {
+      id: user?.id!,
+      name: user?.name!,
+      notify: user?.notify!,
+      verifiedName: user?.verifiedName!,
+      imgUrl: user?.imgUrl ?? (await socket.profilePictureUrl(user!.id, 'image')),
+      status: user?.status ?? (await socket.fetchStatus(user?.id!))?.status,
+    }
+  }
+
   protected getDefaultSocketConfig(): Partial<UserFacingSocketConfig> {
     return {
       logger: this.log,
-      printQRInTerminal: false,
+      printQRInTerminal: this.config.QR_PRINT_TO_TERMINAL,
       browser: Browsers.appropriate('Chrome'),
       qrTimeout: this.config.QR_TIMEOUT,
     }

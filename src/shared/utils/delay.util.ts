@@ -7,10 +7,5 @@ export const delay = (ms: number): Promise<never> => {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-export const delayWithCallback = async <T extends Callback>(
-  ms: number,
-  cb: T,
-): Promise<ReturnType<T>> => {
-  await delay(ms)
-  return cb()
-}
+export const delayWithCallback = async <T extends Callback>(ms: number, cb: T): Promise<ReturnType<T>> =>
+  delay(ms).then(cb)

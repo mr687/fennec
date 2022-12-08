@@ -4,14 +4,14 @@ import {
   ResponseSendMessageDto,
   SendMessageTextDto,
   WhatsappBaileysError,
-  WhatsappBaileysSession,
   WhatsappBaileysSessionId,
   WhatsappBaileysSessionStatus,
 } from './whatsapp-baileys.dto'
+import { ServiceContract, delay, delayWithCallback } from 'src/shared'
 import { AnyMessageContent } from '@adiwajshing/baileys'
-import { Injectable } from '@nestjs/common'
-import { ServiceContract } from 'src/shared'
+import { ForbiddenException, Injectable } from '@nestjs/common'
 import { WhatsappBaileysProvider } from './whatsapp-baileys.provider'
+import { WhatsappBaileysSession } from './whatsapp-baileys.session'
 import { formatPhoneNumber } from './whatsapp-baileys.util'
 
 interface IWhatsapp {
@@ -28,8 +28,16 @@ export class WhatsappBaileysService extends ServiceContract implements IWhatsapp
   }
 
   public async newSession(params: LoginSessionDto) {
-    params.phone = params.phone.replace(/\D/g, '')
-    const result = await this.whatsappProvider.createSession(params.phone)
+    const retryable = async (retry = true): Promise<any> => {
+      const result = await this.whatsappProvider.createSession(params.sessionName)
+      if (retry && result.status === WhatsappBaileysSessionStatus.SESSION_LOGGED_OUT_ERROR) {
+        retry = false
+        return retryable(retry)
+      }
+      return result
+    }
+
+    const result = await retryable()
 
     this.endSessionOnReady(result.id, result.status)
 
@@ -40,7 +48,7 @@ export class WhatsappBaileysService extends ServiceContract implements IWhatsapp
     const { phone } = params
 
     const phoneNumberFormatted = formatPhoneNumber(phone)
-    const [result] = await this.session.onWhatsApp(phoneNumberFormatted)
+    const [result] = await this.session.socket.onWhatsApp(phoneNumberFormatted)
 
     return result?.exists ?? false
   }
@@ -60,14 +68,20 @@ export class WhatsappBaileysService extends ServiceContract implements IWhatsapp
       throw new Error(WhatsappBaileysError.PHONE_NUMBER_NOT_EXISTS_ERROR)
     }
 
-    console.log('phonesk', phoneNumberFormatted, isPhoneNumberOnWhatsapp)
+    await this.session.socket.presenceSubscribe(phoneNumberFormatted)
+    await delay(500)
+
+    await this.session.socket.sendPresenceUpdate('composing', phoneNumberFormatted)
+    await delay(1000)
+
+    await this.session.socket.sendPresenceUpdate('paused', phoneNumberFormatted)
 
     const messageContent: AnyMessageContent = {
       text: message,
     }
-    await this.session.sendMessage(phoneNumberFormatted, messageContent)
+    await this.session.socket.sendMessage(phoneNumberFormatted, messageContent)
 
-    this.endSessionOnReady(sessionId)
+    delayWithCallback(2000, this.endSessionOnReady.bind(this, sessionId))
 
     return {
       status: true,
@@ -87,10 +101,10 @@ export class WhatsappBaileysService extends ServiceContract implements IWhatsapp
   }
 
   protected async syncSession(sessionId: WhatsappBaileysSessionId) {
-    const session = await this.whatsappProvider.getSession(sessionId)
+    const session = await this.whatsappProvider.getSessionOrReconnect(sessionId)
 
     if (!session) {
-      throw new Error(WhatsappBaileysError.NO_SESSION_ERROR)
+      throw new ForbiddenException(WhatsappBaileysError.NO_SESSION_ERROR)
     }
 
     this.session = session

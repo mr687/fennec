@@ -7,6 +7,7 @@ export type WhatsappBaileysConfig = {
   STORE_PATH: string
   MAX_RETRIES: number
   QR_TIMEOUT: number
+  QR_PRINT_TO_TERMINAL: boolean
   RECONNECT_INTERVAL: number
 }
 
@@ -24,8 +25,6 @@ export enum WhatsappBaileysError {
   NO_SESSION_ERROR = 'NO_SESSION_ERROR',
 }
 
-export type WhatsappBaileysSession = ReturnType<typeof makeWASocket>
-
 export type ReceiverDto = {
   receiver: string
 }
@@ -34,12 +33,20 @@ export type SessionIdDto = {
   sessionId: WhatsappBaileysSessionId
 }
 
-export type SendMessageTextDto = SessionIdDto & ReceiverDto & {
-  message: string
+export type WhatsappBaileysSocket = ReturnType<typeof makeWASocket>
+export interface IWhatsappBaileysSession {
+  socket: WhatsappBaileysSocket
+  isNew?: boolean
 }
+
+export type SendMessageTextDto = SessionIdDto &
+  ReceiverDto & {
+    message: string
+  }
 
 export type SendMessageOtpDto = ReceiverDto & {
   code: number
+  sessionId: WhatsappBaileysSessionId
 }
 
 export type ResponseSendMessageDto = ReceiverDto & {
@@ -51,4 +58,6 @@ export type CheckPhoneNumberDto = {
   phone: string
 }
 
-export type LoginSessionDto = CheckPhoneNumberDto
+export type LoginSessionDto = {
+  sessionName: string
+}
