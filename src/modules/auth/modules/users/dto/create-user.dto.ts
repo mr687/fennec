@@ -1,4 +1,5 @@
 import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator'
+
 import { UserDto, UserType } from './user.dto'
 
 export class CreateUserDto implements UserDto {

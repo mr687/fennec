@@ -1,13 +1,17 @@
 import { ClientSession, Model } from 'mongoose'
 
 import { PaginateDto } from './api-controller.contract'
+import { UseLogger } from './logger.contract'
 
-export abstract class ServiceContract<Doc = unknown> {
+export abstract class ServiceContract<Doc = unknown> extends UseLogger {
   private _model: Model<Doc> | undefined
+
+  protected name: string = ServiceContract.name
 
   public mongoSession: ClientSession | undefined
 
   public constructor(model?: Model<Doc>) {
+    super()
     this._model = model
   }
 

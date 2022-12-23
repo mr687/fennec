@@ -1,10 +1,10 @@
 import { ExecutionContext, Injectable } from '@nestjs/common'
-
-import { AuthGuard } from '@nestjs/passport'
-import { AuthType } from '../auth.type'
-import { Observable } from 'rxjs'
-import { PassportStrategyEnum } from '../strategies'
 import { Reflector } from '@nestjs/core'
+import { AuthGuard } from '@nestjs/passport'
+import { Observable } from 'rxjs'
+
+import { AuthType } from '../auth.type'
+import { PassportStrategyEnum } from '../strategies'
 
 @Injectable()
 export class GeneralGuard extends AuthGuard([PassportStrategyEnum.BasicStrategy]) {

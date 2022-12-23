@@ -1,8 +1,9 @@
 import { Prop, Schema } from '@nestjs/mongoose'
-import { UserDto, UserType } from './dto/user.dto'
+import { HydratedDocument } from 'mongoose'
 
 import { CustomSchemaFactory } from 'src/shared/factory/schema.factory'
-import { HydratedDocument } from 'mongoose'
+
+import { UserDto, UserType } from './dto/user.dto'
 
 @Schema({ timestamps: true })
 export class User implements UserDto {

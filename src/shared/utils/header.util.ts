@@ -1,4 +1,5 @@
 import { Request } from 'express'
+
 import { base64ToString } from './string.util'
 
 export const parseAuthorizationHeader = (request: Request) => {

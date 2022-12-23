@@ -1,3 +1,8 @@
+import { AnyMessageContent } from '@adiwajshing/baileys'
+import { ForbiddenException, Injectable } from '@nestjs/common'
+
+import { ServiceContract, delay, delayWithCallback } from 'src/shared'
+
 import {
   CheckPhoneNumberDto,
   LoginSessionDto,
@@ -7,9 +12,6 @@ import {
   WhatsappBaileysSessionId,
   WhatsappBaileysSessionStatus,
 } from './whatsapp-baileys.dto'
-import { ServiceContract, delay, delayWithCallback } from 'src/shared'
-import { AnyMessageContent } from '@adiwajshing/baileys'
-import { ForbiddenException, Injectable } from '@nestjs/common'
 import { WhatsappBaileysProvider } from './whatsapp-baileys.provider'
 import { WhatsappBaileysSession } from './whatsapp-baileys.session'
 import { formatPhoneNumber } from './whatsapp-baileys.util'
@@ -22,14 +24,35 @@ interface IWhatsapp {
 @Injectable()
 export class WhatsappBaileysService extends ServiceContract implements IWhatsapp {
   protected session: WhatsappBaileysSession
+  protected name: string = WhatsappBaileysService.name
 
   public constructor(protected whatsappProvider: WhatsappBaileysProvider) {
     super()
   }
 
-  public async newSession(params: LoginSessionDto) {
+  public async getStatus(
+    sessionId: WhatsappBaileysSessionId,
+  ): Promise<Omit<WhatsappBaileysSession, 'socket' | 'syncData'>> {
+    const session = this.whatsappProvider.getSession(sessionId)
+    if (!session) {
+      return {
+        id: sessionId,
+        connected: false,
+      }
+    }
+    return {
+      id: session.id,
+      status: session.status,
+      connected: session.connected ?? false,
+      qr: session.qr,
+      isNew: session.isNew,
+      user: session.user,
+    }
+  }
+
+  public async newSession(sessionId: WhatsappBaileysSessionId) {
     const retryable = async (retry = true): Promise<any> => {
-      const result = await this.whatsappProvider.createSession(params.sessionName)
+      const result = await this.whatsappProvider.createSession(sessionId)
       if (retry && result.status === WhatsappBaileysSessionStatus.SESSION_LOGGED_OUT_ERROR) {
         retry = false
         return retryable(retry)
@@ -39,7 +62,7 @@ export class WhatsappBaileysService extends ServiceContract implements IWhatsapp
 
     const result = await retryable()
 
-    this.endSessionOnReady(result.id, result.status)
+    // this.endSessionOnReady(result.id, result.status)
 
     return result
   }
@@ -54,7 +77,7 @@ export class WhatsappBaileysService extends ServiceContract implements IWhatsapp
   }
 
   public async sendTextMessage(params: SendMessageTextDto): Promise<ResponseSendMessageDto> {
-    const { receiver, message, sessionId } = params
+    const { receiver, content, sessionId } = params
 
     await this.syncSession(sessionId)
 
@@ -77,16 +100,52 @@ export class WhatsappBaileysService extends ServiceContract implements IWhatsapp
     await this.session.socket.sendPresenceUpdate('paused', phoneNumberFormatted)
 
     const messageContent: AnyMessageContent = {
-      text: message,
+      text: content,
     }
     await this.session.socket.sendMessage(phoneNumberFormatted, messageContent)
 
-    delayWithCallback(2000, this.endSessionOnReady.bind(this, sessionId))
+    // this.endSessionOnReady(sessionId)
 
     return {
       status: true,
       receiver,
-      message,
+      message: content,
+    }
+  }
+
+  public async sendMessage(params: any): Promise<ResponseSendMessageDto> {
+    const { receiver, content, sessionId } = params
+
+    await this.syncSession(sessionId)
+
+    const phoneNumberFormatted = formatPhoneNumber(receiver)
+
+    const isPhoneNumberOnWhatsapp = await this.checkPhoneNumber({
+      phone: phoneNumberFormatted,
+    })
+
+    if (!isPhoneNumberOnWhatsapp) {
+      throw new Error(WhatsappBaileysError.PHONE_NUMBER_NOT_EXISTS_ERROR)
+    }
+
+    await this.session.socket.presenceSubscribe(phoneNumberFormatted)
+    await delay(500)
+
+    await this.session.socket.sendPresenceUpdate('composing', phoneNumberFormatted)
+    await delay(1000)
+
+    await this.session.socket.sendPresenceUpdate('paused', phoneNumberFormatted)
+
+    const newMessage = await this.session.socket.sendMessage(phoneNumberFormatted, content)
+
+    await this.session.socket.sendReceipt(phoneNumberFormatted, undefined, [newMessage?.key?.id!], 'read')
+
+    // this.endSessionOnReady(sessionId)
+
+    return {
+      status: true,
+      receiver,
+      message: newMessage as any,
     }
   }
 

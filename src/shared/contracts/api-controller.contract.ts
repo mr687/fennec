@@ -1,7 +1,7 @@
-import { ApiDataResponse, ApiMetadataResponse, ApiResponse } from './response.contract'
+import { HttpStatus } from '@nestjs/common'
 
 import { ControllerContract } from './controller.contract'
-import { HttpStatus } from '@nestjs/common'
+import { ApiDataResponse, ApiMetadataResponse, ApiResponse } from './response.contract'
 
 export interface PaginateDto {
   perPage: number

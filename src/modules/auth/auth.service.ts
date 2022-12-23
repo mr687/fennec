@@ -1,8 +1,10 @@
 import { Injectable } from '@nestjs/common'
+import { compare } from 'bcrypt'
+
 import { ServiceContract } from 'src/shared'
+
 import { User } from './modules/users/user.schema'
 import { UserService } from './modules/users/user.service'
-import { compare } from 'bcrypt'
 
 interface IAuthService {
   validateAuthBasic(basicToken: { username: string; password: string }): Promise<User | undefined>

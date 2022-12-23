@@ -1,12 +1,10 @@
-import makeWASocket from '@adiwajshing/baileys'
+import makeWASocket, { Contact } from '@adiwajshing/baileys'
 
-export type WhatsappBaileysSessionId = string | number
-
+export type WhatsappBaileysSessionId = string
 export type WhatsappBaileysConfig = {
   SESSION_PATH: string
   STORE_PATH: string
   MAX_RETRIES: number
-  QR_TIMEOUT: number
   QR_PRINT_TO_TERMINAL: boolean
   RECONNECT_INTERVAL: number
 }
@@ -37,11 +35,19 @@ export type WhatsappBaileysSocket = ReturnType<typeof makeWASocket>
 export interface IWhatsappBaileysSession {
   socket: WhatsappBaileysSocket
   isNew?: boolean
+  id: WhatsappBaileysSessionId
+  connected?: boolean
+  status?: WhatsappBaileysSessionStatus
+  user?: Contact | undefined
+  qr?: {
+    type: 'base64'
+    data: string
+  }
 }
 
 export type SendMessageTextDto = SessionIdDto &
   ReceiverDto & {
-    message: string
+    content: string
   }
 
 export type SendMessageOtpDto = ReceiverDto & {
@@ -59,5 +65,5 @@ export type CheckPhoneNumberDto = {
 }
 
 export type LoginSessionDto = {
-  sessionName: string
+  sessionId: string
 }

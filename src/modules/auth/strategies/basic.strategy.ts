@@ -1,10 +1,12 @@
-import { AuthService } from '../auth.service'
 import { Injectable } from '@nestjs/common'
 import { PassportStrategy } from '@nestjs/passport'
-import { PassportStrategyEnum } from './enum.strategy'
 import { Request } from 'express'
 import { Strategy } from 'passport-custom'
+
 import { parseBasicTokenFromRequestHeader } from 'src/shared'
+
+import { AuthService } from '../auth.service'
+import { PassportStrategyEnum } from './enum.strategy'
 
 @Injectable()
 export class BasicStrategy extends PassportStrategy(Strategy, PassportStrategyEnum.BasicStrategy) {

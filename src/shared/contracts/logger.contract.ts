@@ -9,7 +9,7 @@ export class UseLogger {
     if (!this._logger) {
       this._logger = pino({
         name: this.name,
-        level: 'debug',
+        level: process.env.APP_LEVEL ?? 'debug',
       })
     }
 

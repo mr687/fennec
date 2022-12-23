@@ -1,8 +1,9 @@
 import { IsDefined, IsNumber, IsPhoneNumber, IsPositive, IsString, Max } from 'class-validator'
+
 import {
   SendMessageOtpDto as BaileysSendMessageOtpDto,
   WhatsappBaileysSessionId,
-} from 'src/modules/whatsapp-bot-api/providers/whatsapp-baileys'
+} from 'src/modules/chat-bot/providers/whatsapp-baileys'
 
 export class SendMessageOtpDto implements BaileysSendMessageOtpDto {
   @IsDefined()

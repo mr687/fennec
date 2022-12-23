@@ -1,10 +1,12 @@
 import { ConflictException, Injectable } from '@nestjs/common'
-import { PaginateDto, ServiceContract } from 'src/shared'
-import { User, UserDoc } from './user.schema'
-import { CreateUserDto } from './dto/create-user.dto'
 import { InjectModel } from '@nestjs/mongoose'
 import { Model } from 'mongoose'
 import { v4 as UUIDv4 } from 'uuid'
+
+import { PaginateDto, ServiceContract } from 'src/shared'
+
+import { CreateUserDto } from './dto/create-user.dto'
+import { User, UserDoc } from './user.schema'
 
 @Injectable()
 export class UserService extends ServiceContract<UserDoc> {
