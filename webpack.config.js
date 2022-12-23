@@ -1,9 +1,8 @@
 const path = require('path')
 
-const webpack = require('webpack')
-
-const NodeExternalsPlugin = require('webpack-node-externals')
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
+const webpack = require('webpack')
+const NodeExternalsPlugin = require('webpack-node-externals')
 
 const isProduction = typeof process.env.NODE_ENV !== undefined && process.env.NODE_ENV === 'production'
 const mode = isProduction ? 'production' : 'development'
@@ -13,18 +12,14 @@ console.log(`Webpack running on ${mode}`)
 
 module.exports = {
   context: __dirname,
-  entry: ['webpack/hot/poll?100', './src/main.ts'],
+  entry: ['./src/main.ts'],
   optimization: {
     minimize: false,
   },
   target: 'node',
   mode,
   devtool,
-  externals: [
-    NodeExternalsPlugin({
-      allowlist: ['webpack/hot/poll?100'],
-    }),
-  ],
+  externals: [NodeExternalsPlugin()],
   module: {
     rules: [
       {

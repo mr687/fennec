@@ -22,8 +22,8 @@ export class User implements UserDto {
   @Prop({ require: true, default: false })
   confirmed: boolean
 
-  @Prop({ required: true, enum: UserType, default: UserType.Client })
-  type: UserType = UserType.Client
+  @Prop({ required: true, type: String, enum: UserType, default: UserType.Client })
+  type: UserType
 }
 export type UserDoc = HydratedDocument<User>
 export const UserSchema = CustomSchemaFactory.createForClass(User)

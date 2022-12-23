@@ -1,4 +1,4 @@
-import pino, { Logger } from 'pino'
+import { Logger, pino } from 'pino'
 
 export class UseLogger {
   private _logger: Logger

@@ -1,7 +1,7 @@
 import { Type } from '@nestjs/common'
 import { SchemaFactory } from '@nestjs/mongoose'
 import { Model, Schema } from 'mongoose'
-import * as mongooseHiddenPlugin from 'mongoose-hidden'
+import mongooseHiddenPlugin from 'mongoose-hidden'
 
 export class CustomSchemaFactory extends SchemaFactory {
   static createForClass<TClass = any>(target: Type<TClass>): Schema<TClass, Model<TClass>> {

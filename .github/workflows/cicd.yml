@@ -1,0 +1,34 @@
+name: Fennec-CD
+
+on:
+  push:
+    branches: [ production ]
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with: 
+        token: ${{ secrets.CI_CD_SECRET }}
+
+    - name: Set up Node
+      uses: actions/setup-node@v1
+      with:
+        node-version: 'v18.9.0'
+    - run: yarn install
+    - run: yarn webpack:build
+    
+    - name: Deploy to production
+      uses: mdallasanta/ssh-scp-deploy@v1.2.0
+      with:
+        local: './dist/bundle.js ./package.json'
+        remote: ${{ secrets.PROJECT_DIR }}
+        host: ${{secrets.SERVER_HOST}}
+        port: ${{secrets.SERVER_PORT}}
+        user: ${{secrets.SERVER_USERNAME}}
+        key: ${{secrets.SERVER_KEY}}
+        pre_upload: echo "This will be executed before the upload!"
+        post_upload: nvm use && npm install --force && pm2 restart ${{ secrets.PROJECT_NAME }}
+        ssh_options: -o StrictHostKeyChecking=no
+        scp_options: -v

@@ -10,7 +10,7 @@ export class LoggerService extends ConsoleLogger {
     super(context ?? LoggerService.name)
 
     this.logger = pino({
-      level: process.env.APP_LEVEL ?? 'level',
+      level: process.env.APP_LEVEL ?? 'info',
     })
   }
 
