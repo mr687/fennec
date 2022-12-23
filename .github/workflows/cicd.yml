@@ -29,6 +29,6 @@ jobs:
         user: ${{secrets.SERVER_USERNAME}}
         key: ${{secrets.SERVER_KEY}}
         pre_upload: echo "This will be executed before the upload!"
-        post_upload: nvm use && npm install --force && pm2 restart ${{ secrets.PROJECT_NAME }}
+        post_upload: cd ${{ secrets.PROJECT_DIR }} && nvm use 18 && npm install --force && pm2 restart ${{ secrets.PROJECT_NAME }}
         ssh_options: -o StrictHostKeyChecking=no
         scp_options: -v
