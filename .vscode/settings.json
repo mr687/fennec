@@ -1,9 +1,11 @@
 {
-  "editor.formatOnSave": true,
+  "editor.formatOnSave": false,
+  "eslint.validate": [
+    "typescript"
+  ],
   "editor.defaultFormatter": "esbenp.prettier-vscode",
   "editor.codeActionsOnSave": {
-    "source.fixAll.eslint": true,
-    "source.fixAll.format": true
+    "source.fixAll": true,
   },
   "typescript.tsdk": "node_modules/typescript/lib"
 }
