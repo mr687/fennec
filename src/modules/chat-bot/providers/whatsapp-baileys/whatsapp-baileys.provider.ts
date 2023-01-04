@@ -44,15 +44,22 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
     this.log.setContext(WhatsappBaileysProvider.name)
   }
 
-  public async createSessionWithDelay(sessionId: WhatsappBaileysSessionId, ms = 1000) {
-    const createSessionCallback = this.createSession.bind(this, sessionId)
+  public async createSessionWithDelay(
+    sessionId: WhatsappBaileysSessionId,
+    ms = 1000,
+    onSessionCreated?: (session: WhatsappBaileysSession) => Promise<void>,
+  ) {
+    const createSessionCallback = this.createSession.bind(this, sessionId, onSessionCreated)
 
     this.log.debug(`[${sessionId}] Reconnecting in ${ms} ms`)
 
     return delayWithCallback(ms, createSessionCallback)
   }
 
-  public async createSession(sessionId: WhatsappBaileysSessionId) {
+  public async createSession(
+    sessionId: WhatsappBaileysSessionId,
+    onSessionCreated?: (session: WhatsappBaileysSession) => Promise<void>,
+  ) {
     const sessionFilepath = this.resolveSessionPath(sessionId)
 
     const { state, saveCreds } = await useMultiFileAuthState(sessionFilepath)
@@ -124,6 +131,10 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
               session.user = await this.resolveUserSession(socket)
               this.setSession(sessionId, session)
               // delayWithCallback(2000, this.endSession.bind(this, sessionId))
+
+              if (onSessionCreated) {
+                await onSessionCreated(session)
+              }
             }
 
             return resolve({
@@ -154,7 +165,7 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
               })
             }
 
-            return this.createSessionWithDelay(sessionId, reconnectInterval)
+            return this.createSessionWithDelay(sessionId, reconnectInterval, onSessionCreated)
           case 'connecting':
           default:
             this.log.debug(`[${sessionId}] Connecting..`)
@@ -252,10 +263,10 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
   }
 
   public deleteSession(sessionId: WhatsappBaileysSessionId): void {
-    const sessionFilepath = this.resolveSessionPath(sessionId)
+    // const sessionFilepath = this.resolveSessionPath(sessionId)
 
-    const options = { force: true, recursive: true }
-    rmSync(sessionFilepath, options)
+    // const options = { force: true, recursive: true }
+    // rmSync(sessionFilepath, options)
 
     this._sessions.delete(sessionId)
     this._retries.delete(sessionId)

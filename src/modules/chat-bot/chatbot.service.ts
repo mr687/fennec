@@ -1,5 +1,5 @@
 import { InjectQueue } from '@nestjs/bull'
-import { ForbiddenException, Injectable, UnprocessableEntityException } from '@nestjs/common'
+import { Injectable, UnprocessableEntityException } from '@nestjs/common'
 import { InjectModel } from '@nestjs/mongoose'
 import { Queue } from 'bull'
 import { Model } from 'mongoose'
@@ -8,6 +8,7 @@ import {
   SendMessageOtpDto,
   SendMessageTextDto,
   WhatsappBaileysService,
+  WhatsappBaileysSession,
   WhatsappBaileysSessionId,
 } from 'src/modules/chat-bot/providers/whatsapp-baileys'
 import { ServiceContract, randomSessionId } from 'src/shared'
@@ -40,12 +41,7 @@ export class ChatBotService extends ServiceContract<ChatBotSessionDoc> {
   public async loginSession() {
     const sessionId = randomSessionId()
 
-    let session = await this.findBy('name', sessionId)
-    if (!session) {
-      session = await this.create({ name: sessionId })
-    }
-    const result = await this.whatsappBaileysService.newSession(sessionId)
-
+    const result = await this.whatsappBaileysService.newSession(sessionId, this.onSessionCreated.bind(this))
     return result
   }
 
@@ -54,7 +50,7 @@ export class ChatBotService extends ServiceContract<ChatBotSessionDoc> {
 
     const session = await this.findBy('name', sessionId)
     if (!session) {
-      throw new ForbiddenException()
+      throw new UnprocessableEntityException()
     }
 
     const MessageOTPFormat = 'Your OTP code is {code}.\nPLEASE DO NOT SHARE THIS OTP WITH ANYONE!'
@@ -105,5 +101,17 @@ export class ChatBotService extends ServiceContract<ChatBotSessionDoc> {
       status: 'QUEUED',
     }
     return result
+  }
+
+  private async onSessionCreated(session: WhatsappBaileysSession) {
+    const { id: sessionId, user } = session
+
+    const newSession = new this.model()
+    newSession.$session(this.mongoSession)
+    newSession.name = sessionId
+    newSession.sessionId = sessionId
+    newSession.phone = user!.id
+    newSession.user = user
+    await newSession.save()
   }
 }

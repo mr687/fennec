@@ -50,9 +50,12 @@ export class WhatsappBaileysService extends ServiceContract implements IWhatsapp
     }
   }
 
-  public async newSession(sessionId: WhatsappBaileysSessionId) {
+  public async newSession(
+    sessionId: WhatsappBaileysSessionId,
+    onSessionCreated?: (session: WhatsappBaileysSession) => Promise<void>,
+  ) {
     const retryable = async (retry = true): Promise<any> => {
-      const result = await this.whatsappProvider.createSession(sessionId)
+      const result = await this.whatsappProvider.createSession(sessionId, onSessionCreated)
       if (retry && result.status === WhatsappBaileysSessionStatus.SESSION_LOGGED_OUT_ERROR) {
         retry = false
         return retryable(retry)

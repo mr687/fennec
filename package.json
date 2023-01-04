@@ -10,7 +10,7 @@
     "build": "nest build",
     "format": "prettier --write \"src/**/*.ts\" \"test/**/*.ts\"",
     "start": "nest start",
-    "start:dev": "yarn start --watch | pino-colada",
+    "start:dev": "yarn start --watch | pino-pretty",
     "start:debug": "yarn start --debug --watch",
     "start:prod": "node dist/bundle.js",
     "webpack:build": "yarn prebuild && webpack --config webpack.config.js",
