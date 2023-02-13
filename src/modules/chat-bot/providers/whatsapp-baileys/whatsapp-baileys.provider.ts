@@ -86,7 +86,7 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
     const conversation = useMongoConversation(this.connection, {
       ignoreMessage: message => {
         const content = message.message?.conversation || message.message?.extendedTextMessage?.text || ''
-        return /(kode\sotp|terima\skasih\ssudah\sberbelanja)/gi.test(content)
+        return /(kode\sotp|your\sotp|terima\skasih\ssudah\sberbelanja)/gi.test(content)
       },
     })
 
