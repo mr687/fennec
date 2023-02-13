@@ -84,8 +84,10 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
 
     const socket = makeWASocket(options)
     const conversation = useMongoConversation(this.connection, {
-      ignoreFromMe: true,
-      ignoreJids: ['6282325441718@s.whatsapp.net'],
+      ignoreMessage: message => {
+        const content = message.message?.conversation || message.message?.extendedTextMessage?.text || ''
+        return /(kode\sotp|terima\skasih\ssudah\sberbelanja)/gi.test(content)
+      },
     })
 
     await socket.waitForSocketOpen()

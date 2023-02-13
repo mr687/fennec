@@ -2756,10 +2756,10 @@ babel-preset-jest@^28.1.3:
     babel-plugin-jest-hoist "^28.1.3"
     babel-preset-current-node-syntax "^1.0.0"
 
-baileys-conversation@^0.0.3:
-  version "0.0.3"
-  resolved "https://registry.yarnpkg.com/baileys-conversation/-/baileys-conversation-0.0.3.tgz#ff05383233fdf20029aeeeefa542e9af852553ac"
-  integrity sha512-GF43GujNvs6WfhPJsFGXuN1/P9YYAeh50ZC5uztKZQ4yxtRGQsxwx4YUr5oeSAZCcgxr+ouP87kWDS7MzF44Qg==
+baileys-conversation@^0.0.4:
+  version "0.0.4"
+  resolved "https://registry.yarnpkg.com/baileys-conversation/-/baileys-conversation-0.0.4.tgz#222bba58e7ebfbece8d27997ab135d0b99f51518"
+  integrity sha512-nEGJJlGdWThDi/3c60W8PK/D3wLAHs/ZYYAOXTk7rWZNN1s+GilOlpGiiuUD8O0kyK36VyUb62eFYmMR07PEKg==
 
 balanced-match@^1.0.0:
   version "1.0.2"
