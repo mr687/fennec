@@ -16,7 +16,7 @@ import { ChatBotService } from './chatbot.service'
       name: 'chat-bot',
       defaultJobOptions: {
         removeOnComplete: true,
-        removeOnFail: true,
+        removeOnFail: false,
       },
     }),
     WhatsappBaileysModule,

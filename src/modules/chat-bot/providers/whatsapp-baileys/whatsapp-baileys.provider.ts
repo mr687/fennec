@@ -1,4 +1,4 @@
-import { existsSync, rmSync } from 'fs'
+import { existsSync } from 'fs'
 
 import makeWASocket, {
   Browsers,
@@ -12,6 +12,9 @@ import makeWASocket, {
 import { Boom } from '@hapi/boom'
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
+import { InjectConnection } from '@nestjs/mongoose'
+import { useMongoConversation } from 'baileys-conversation'
+import { Connection } from 'mongoose'
 import { toDataURL } from 'qrcode'
 
 import { LoggerService } from 'src/modules/logger/logger.service'
@@ -33,7 +36,11 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
   private _sessions: Map<WhatsappBaileysSessionId, WhatsappBaileysSession> = new Map()
   private _msgRetryCounterMap: MessageRetryMap = {}
 
-  public constructor(private readonly configService: ConfigService, private readonly log: LoggerService) {
+  public constructor(
+    private readonly configService: ConfigService,
+    private readonly log: LoggerService,
+    @InjectConnection() private readonly connection: Connection,
+  ) {
     super({
       SESSION_PATH: configService.get<string>('WA_SESSION_PATH', 'storage/whatsapp-sessions'),
       STORE_PATH: configService.get<string>('WA_STORE_PATH', 'storage/whatsapp-stores'),
@@ -76,8 +83,13 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
     }
 
     const socket = makeWASocket(options)
+    const conversation = useMongoConversation(this.connection, {
+      ignoreFromMe: true,
+      ignoreJids: ['6282325441718@s.whatsapp.net'],
+    })
 
     await socket.waitForSocketOpen()
+    conversation.binding(socket)
 
     this.log.debug('Socket opened!')
 
