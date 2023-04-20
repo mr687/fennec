@@ -108,69 +108,89 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
       qr?: { type: 'base64'; data: string }
     }>(resolve => {
       socket.ev.on('connection.update', async update => {
-        const { connection, lastDisconnect, qr, isNewLogin } = update
+        try {
+          const { connection, lastDisconnect, qr, isNewLogin } = update
 
-        const statusCode: DisconnectReason = (lastDisconnect?.error as Boom)?.output?.statusCode
+          const statusCode: DisconnectReason = (lastDisconnect?.error as Boom)?.output?.statusCode
 
-        const isLoggedOut = statusCode === DisconnectReason.loggedOut
-        const isRestartRequired = statusCode === DisconnectReason.restartRequired
-        const isConnectionClosed = statusCode === DisconnectReason.connectionClosed
-        const isSessionEnd = (statusCode as any) === WhatsappBaileysError.SESSION_END_ERROR
+          const isLoggedOut = statusCode === DisconnectReason.loggedOut
+          const isRestartRequired = statusCode === DisconnectReason.restartRequired
+          const isConnectionClosed = statusCode === DisconnectReason.connectionClosed
+          const isSessionEnd = (statusCode as any) === WhatsappBaileysError.SESSION_END_ERROR
 
-        const reconnectInterval = isRestartRequired ? 0 : this.config.RECONNECT_INTERVAL
+          const reconnectInterval = isRestartRequired ? 0 : this.config.RECONNECT_INTERVAL
 
-        let isShouldReconnect
+          let isShouldReconnect
 
-        if (isNewLogin) {
-          this.log.debug(`[${sessionId}] New login: ${isNewLogin}`)
-          const newSession = this.getSession(sessionId)
-          if (newSession) {
-            newSession.isNew = true
-            this.setSession(sessionId, newSession)
-          }
-        }
-
-        switch (connection) {
-          case 'open':
-            this.log.debug(`[${sessionId}] Connection opened`)
-
-            this._retries.delete(sessionId)
-
-            const session = this.getSession(sessionId)
-            if (session && session.isNew) {
-              session.isNew = false
-              session.qr = undefined
-              session.connected = true
-              session.status = WhatsappBaileysSessionStatus.READY
-              session.user = await this.resolveUserSession(socket)
-              this.setSession(sessionId, session)
-              // delayWithCallback(2000, this.endSession.bind(this, sessionId))
-
-              if (onSessionCreated) {
-                await onSessionCreated(session)
-              }
+          if (isNewLogin) {
+            this.log.debug(`[${sessionId}] New login: ${isNewLogin}`)
+            const newSession = this.getSession(sessionId)
+            if (newSession) {
+              newSession.isNew = true
+              this.setSession(sessionId, newSession)
             }
+          }
 
-            return resolve({
-              id: sessionId,
-              status: WhatsappBaileysSessionStatus.READY,
-              connected: true,
-              user: session!.user,
-            })
-          case 'close':
-            this.log.debug(`[${sessionId}] Connection closed`)
+          switch (connection) {
+            case 'open':
+              this.log.debug(`[${sessionId}] Connection opened`)
 
-            if (isSessionEnd) {
+              this._retries.delete(sessionId)
+
+              const session = this.getSession(sessionId)
+              if (session && session.isNew) {
+                session.isNew = false
+                session.qr = undefined
+                session.connected = true
+                session.status = WhatsappBaileysSessionStatus.READY
+                session.user = await this.resolveUserSession(socket)
+                this.setSession(sessionId, session)
+                // delayWithCallback(2000, this.endSession.bind(this, sessionId))
+
+                if (onSessionCreated) {
+                  await onSessionCreated(session)
+                }
+              }
+
               return resolve({
                 id: sessionId,
                 status: WhatsappBaileysSessionStatus.READY,
                 connected: true,
+                user: session!.user,
               })
-            }
+            case 'close':
+              this.log.debug(`[${sessionId}] Connection closed`)
 
+              if (isSessionEnd) {
+                return resolve({
+                  id: sessionId,
+                  status: WhatsappBaileysSessionStatus.READY,
+                  connected: true,
+                })
+              }
+
+              isShouldReconnect = this.shouldReconnect(sessionId)
+
+              if (isConnectionClosed || isLoggedOut || !isShouldReconnect) {
+                this.deleteSession(sessionId)
+                return resolve({
+                  id: sessionId,
+                  status: WhatsappBaileysSessionStatus.SESSION_LOGGED_OUT_ERROR,
+                  connected: false,
+                })
+              }
+
+              return this.createSessionWithDelay(sessionId, reconnectInterval, onSessionCreated)
+            case 'connecting':
+            default:
+              this.log.debug(`[${sessionId}] Connecting..`)
+              break
+          }
+
+          if (qr) {
             isShouldReconnect = this.shouldReconnect(sessionId)
 
-            if (isConnectionClosed || isLoggedOut || !isShouldReconnect) {
+            if (!isShouldReconnect) {
               this.deleteSession(sessionId)
               return resolve({
                 id: sessionId,
@@ -179,48 +199,32 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
               })
             }
 
-            return this.createSessionWithDelay(sessionId, reconnectInterval, onSessionCreated)
-          case 'connecting':
-          default:
-            this.log.debug(`[${sessionId}] Connecting..`)
-            break
-        }
+            this.log.debug(`[${sessionId}] Scan QR required!`)
 
-        if (qr) {
-          isShouldReconnect = this.shouldReconnect(sessionId)
+            const qrCodeUrl = await toDataURL(qr)
+            const session = this.getSession(sessionId)
+            if (session) {
+              session.status = WhatsappBaileysSessionStatus.SCAN_QR
+              session.connected = false
+              session.qr = {
+                type: 'base64',
+                data: qrCodeUrl,
+              }
+              this.setSession(sessionId, session)
+            }
 
-          if (!isShouldReconnect) {
-            this.deleteSession(sessionId)
             return resolve({
               id: sessionId,
-              status: WhatsappBaileysSessionStatus.SESSION_LOGGED_OUT_ERROR,
+              status: WhatsappBaileysSessionStatus.SCAN_QR,
               connected: false,
+              // qr: {
+              //   type: 'base64',
+              //   data: qrCodeUrl,
+              // },
             })
           }
-
-          this.log.debug(`[${sessionId}] Scan QR required!`)
-
-          const qrCodeUrl = await toDataURL(qr)
-          const session = this.getSession(sessionId)
-          if (session) {
-            session.status = WhatsappBaileysSessionStatus.SCAN_QR
-            session.connected = false
-            session.qr = {
-              type: 'base64',
-              data: qrCodeUrl,
-            }
-            this.setSession(sessionId, session)
-          }
-
-          return resolve({
-            id: sessionId,
-            status: WhatsappBaileysSessionStatus.SCAN_QR,
-            connected: false,
-            // qr: {
-            //   type: 'base64',
-            //   data: qrCodeUrl,
-            // },
-          })
+        } catch (e) {
+          console.error(e)
         }
       })
     })
