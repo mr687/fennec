@@ -7,6 +7,7 @@ import makeWASocket, {
   MessageRetryMap,
   UserFacingSocketConfig,
   fetchLatestBaileysVersion,
+  fetchLatestWaWebVersion,
   useMultiFileAuthState,
 } from '@adiwajshing/baileys'
 import { Boom } from '@hapi/boom'
@@ -46,6 +47,7 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
       STORE_PATH: configService.get<string>('WA_STORE_PATH', 'storage/whatsapp-stores'),
       MAX_RETRIES: configService.get<number>('WA_MAX_RETRIES', 1),
       QR_PRINT_TO_TERMINAL: configService.get<boolean>('WA_QR_PRINT_TO_TERMINAL', false),
+      QR_TIMEOUT: configService.get<number>('QR_TIMEOUT', 60e3),
       RECONNECT_INTERVAL: configService.get<number>('WA_RECONNECT_INTERVAL', 3e3),
     })
     this.log.setContext(WhatsappBaileysProvider.name)
@@ -72,7 +74,7 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
     const { state, saveCreds } = await useMultiFileAuthState(sessionFilepath)
 
     // fetch latest version of WA Web
-    const { version, isLatest } = await fetchLatestBaileysVersion()
+    const { version, isLatest } = await fetchLatestWaWebVersion({})
     this.log.debug(`using WA v${version.join('.')}, isLatest: ${isLatest}`)
 
     const options: UserFacingSocketConfig = {
@@ -340,6 +342,7 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
       // logger: this.log,
       printQRInTerminal: this.config.QR_PRINT_TO_TERMINAL,
       browser: Browsers.appropriate('Chrome'),
+      qrTimeout: this.config.QR_TIMEOUT,
     }
   }
 

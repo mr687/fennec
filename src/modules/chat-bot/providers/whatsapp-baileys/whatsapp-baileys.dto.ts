@@ -6,6 +6,7 @@ export type WhatsappBaileysConfig = {
   STORE_PATH: string
   MAX_RETRIES: number
   QR_PRINT_TO_TERMINAL: boolean
+  QR_TIMEOUT: number
   RECONNECT_INTERVAL: number
 }
 
