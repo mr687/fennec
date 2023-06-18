@@ -14,13 +14,14 @@ import {ServiceContract} from '@/shared/contracts'
 import {randomSessionId} from '@/shared/utils'
 
 import {ChatBotSession, ChatBotSessionDoc} from './chatbot-session.schema'
+import {CHATBOT_QUEUE_NAME} from './chatbot.processor'
 import {SendMessageOtpDto} from './dto'
 
 @Injectable()
 export class ChatBotService extends ServiceContract<ChatBotSessionDoc> {
   public constructor(
     protected readonly whatsappBaileysService: WhatsappBaileysService,
-    @InjectQueue('chat-bot')
+    @InjectQueue(CHATBOT_QUEUE_NAME)
     protected readonly waBotQueue: Queue<SendMessageTextDto>,
     @InjectModel(ChatBotSession.name)
     protected readonly sessionModel: Model<ChatBotSessionDoc>,
@@ -43,7 +44,6 @@ export class ChatBotService extends ServiceContract<ChatBotSessionDoc> {
 
   public async loginSession() {
     const sessionId = randomSessionId()
-
     const result = await this.whatsappBaileysService.newSession(
       sessionId,
       this.onSessionCreated.bind(this),

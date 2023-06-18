@@ -1,5 +1,6 @@
 import {ConflictException, Injectable} from '@nestjs/common'
 import {InjectModel} from '@nestjs/mongoose'
+import {plainToInstance} from 'class-transformer'
 import {Model} from 'mongoose'
 import {v4 as UUIDv4} from 'uuid'
 
@@ -25,7 +26,7 @@ export class UserService extends ServiceContract<UserDoc> {
     const userQuery = this.buildPaginateQuery(params, query)
     const [totalData, data] = await Promise.all([this.countDocs(), userQuery])
 
-    return {totalData, data}
+    return {totalData, data: plainToInstance(User, data)}
   }
 
   public async create(params: CreateUserDto): Promise<User> {

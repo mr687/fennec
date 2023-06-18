@@ -1,12 +1,8 @@
 import {Module} from '@nestjs/common'
 import {APP_FILTER, APP_INTERCEPTOR} from '@nestjs/core'
 
-import {
-  registerBull,
-  registerEnv,
-  registerLogger,
-  registerMongoose,
-} from './config'
+import {registerEnv, registerLogger, registerMongoose} from './config'
+import {BullBoardModule} from './config/bull/bull-board.module'
 import {HttpErrorFilter} from './filters/http-error.filter'
 import {HttpInterceptor} from './interceptors/http.interceptor'
 
@@ -15,7 +11,7 @@ import {HttpInterceptor} from './interceptors/http.interceptor'
     registerLogger(),
     registerEnv(),
     registerMongoose(),
-    registerBull(),
+    BullBoardModule,
   ],
   providers: [
     {provide: APP_FILTER, useClass: HttpErrorFilter},

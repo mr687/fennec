@@ -1,6 +1,7 @@
+import {IncomingMessage} from 'http'
+
 import {Injectable} from '@nestjs/common'
 import {PassportStrategy} from '@nestjs/passport'
-import {FastifyRequest} from 'fastify'
 import {Strategy} from 'passport-custom'
 
 import {parseBasicTokenFromRequestHeader} from '@/shared/utils'
@@ -17,7 +18,7 @@ export class BasicStrategy extends PassportStrategy(
     super()
   }
 
-  public async validate(request: FastifyRequest): Promise<boolean> {
+  public async validate(request: IncomingMessage): Promise<boolean> {
     const basicToken = parseBasicTokenFromRequestHeader(request)
     if (!basicToken) {
       return false

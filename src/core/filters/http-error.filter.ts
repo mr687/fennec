@@ -1,3 +1,5 @@
+import {IncomingMessage, ServerResponse} from 'http'
+
 import {
   ArgumentsHost,
   Catch,
@@ -6,7 +8,6 @@ import {
   Injectable,
   Logger,
 } from '@nestjs/common'
-import {FastifyReply, FastifyRequest} from 'fastify'
 
 import {ApiResponse} from '@/shared/contracts'
 
@@ -17,8 +18,8 @@ export class HttpErrorFilter implements ExceptionFilter<HttpException> {
 
   public catch(exception: HttpException, host: ArgumentsHost) {
     const ctx = host.switchToHttp()
-    const request = ctx.getRequest<FastifyRequest>()
-    const response = ctx.getResponse<FastifyReply>()
+    const request = ctx.getRequest<IncomingMessage>()
+    const response = ctx.getResponse<ServerResponse>()
     const status = exception.getStatus()
     const errorMessage = exception.message
     let errors = null
@@ -38,6 +39,9 @@ export class HttpErrorFilter implements ExceptionFilter<HttpException> {
     this.logger.error(
       `${request.method} ${request.url} ${status} ${errorMessage} ${diff}ms`,
     )
-    return response.status(status).send(errorResponse)
+    response.statusCode = status
+    response.setHeader('Content-Type', 'application/json')
+    response.write(JSON.stringify(errorResponse))
+    response.end()
   }
 }

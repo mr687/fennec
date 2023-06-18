@@ -7,7 +7,9 @@ import {
   WhatsappBaileysService,
 } from '@/providers/whatsapp-baileys'
 
-@Processor('chat-bot')
+export const CHATBOT_QUEUE_NAME = 'chatbot'
+
+@Processor(CHATBOT_QUEUE_NAME)
 export class ChatBotProcessor {
   private readonly logger = new Logger(ChatBotProcessor.name)
 
@@ -16,16 +18,13 @@ export class ChatBotProcessor {
   ) {}
 
   @OnQueueFailed()
-  onFailed(job: Job, error: any) {
-    this.logger.error(`Failed job ${job.id} of type ${job.name} with data:`)
-    this.logger.error(job.data)
-    this.logger.error(error)
+  onFailed(job: Job, _error: any) {
+    this.logger.error(`Failed job ${job.id}`)
   }
 
   @OnQueueCompleted()
   onCompleted(job: Job) {
-    this.logger.log(`Completed job ${job.id} of type ${job.name} with data:`)
-    this.logger.verbose(job.data)
+    this.logger.log(`Completed job ${job.id}`)
   }
 
   @Process('sendMessageOtp')

@@ -1,15 +1,15 @@
-import {FastifyRequest} from 'fastify'
+import type {IncomingMessage} from 'http'
 
 import {base64ToString} from './string.util'
 
-export const parseAuthorizationHeader = (request: FastifyRequest) => {
+export const parseAuthorizationHeader = (request: IncomingMessage) => {
   const authorizationHeader = request.headers.authorization
 
   return authorizationHeader
 }
 
 export const parseBearerTokenFromRequestHeader = (
-  request: FastifyRequest,
+  request: IncomingMessage,
 ): string | undefined => {
   const authorizationHeader = parseAuthorizationHeader(request)
   const bearerToken = authorizationHeader?.replace(/bearer\s/i, '')
@@ -18,7 +18,7 @@ export const parseBearerTokenFromRequestHeader = (
 }
 
 export const parseBasicTokenFromRequestHeader = (
-  request: FastifyRequest,
+  request: IncomingMessage,
 ): {username: string; password: string} | undefined => {
   const authorizationHeader = parseAuthorizationHeader(request)
   const basicTokenEncoded = authorizationHeader?.replace(/basic\s/i, '')

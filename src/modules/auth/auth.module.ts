@@ -8,5 +8,6 @@ import {BasicStrategy} from './strategies/basic.strategy'
 @Module({
   imports: [UserModule, PassportModule],
   providers: [AuthService, BasicStrategy],
+  exports: [AuthService],
 })
 export class AuthModule {}

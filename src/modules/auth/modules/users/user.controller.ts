@@ -3,6 +3,7 @@ import {
   Controller,
   Delete,
   Get,
+  NotImplementedException,
   Param,
   Patch,
   Post,
@@ -54,10 +55,11 @@ export class UserController
   @Post('/register')
   @UsePipes(RequestValidation)
   public async create(
-    @Body() params: CreateUserDto,
+    @Body() _params: CreateUserDto,
   ): Promise<ApiResponse<User>> {
-    const createdUser = await this.userService.create(params)
-    return this.respondCreated(createdUser)
+    throw new NotImplementedException('Method not implemented.')
+    // const createdUser = await this.userService.create(params)
+    // return this.respondCreated(createdUser)
   }
 
   @Patch(':id')
@@ -66,7 +68,7 @@ export class UserController
     @Param('id') _id: CommonIdDto['id'],
     @Body() _params: UpdateUserDto,
   ): Promise<ApiResponse<User>> {
-    throw new Error('Method not implemented.')
+    throw new NotImplementedException('Method not implemented.')
   }
 
   @Delete(':id')
@@ -74,6 +76,6 @@ export class UserController
   public async delete(
     @Param('id') _id: CommonIdDto['id'],
   ): Promise<ApiResponse<User>> {
-    throw new Error('Method not implemented.')
+    throw new NotImplementedException('Method not implemented.')
   }
 }

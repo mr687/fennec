@@ -1,6 +1,5 @@
 import {existsSync} from 'fs'
 import path from 'path'
-import {setInterval} from 'timers/promises'
 
 import {Boom} from '@hapi/boom'
 import {Injectable, Logger} from '@nestjs/common'
@@ -19,7 +18,7 @@ import makeWASocket, {
   proto,
   useMultiFileAuthState,
 } from '@whiskeysockets/baileys'
-import baileysLogger from '@whiskeysockets/baileys/lib/Utils/logger'
+import {InjectPinoLogger, PinoLogger} from 'nestjs-pino'
 
 import {ProviderContract} from '@/shared/contracts'
 import {delayWithCallback, stringToBase64} from '@/shared/utils'
@@ -41,9 +40,12 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
   private _sessions: Map<WhatsappBaileysSessionId, WhatsappBaileysSession> =
     new Map()
   private _store: ReturnType<typeof makeInMemoryStore> | null
-  private _pinoLogger = baileysLogger.child({})
 
-  public constructor(configService: ConfigService) {
+  public constructor(
+    configService: ConfigService,
+    @InjectPinoLogger(WhatsappBaileysProvider.name)
+    private readonly _pinoLogger: PinoLogger,
+  ) {
     super({
       SESSION_PATH: configService.get<string>(
         'WA_SESSION_PATH',
@@ -64,7 +66,6 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
         3_000,
       ),
     })
-    this._pinoLogger.level = configService.get<string>('LOG_LEVEL', 'trace')
   }
 
   public async createSessionWithDelay(
@@ -85,7 +86,8 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
     sessionId: WhatsappBaileysSessionId,
     onSessionCreated?: (session: WhatsappBaileysSession) => Promise<void>,
   ) {
-    const sessionFilepath = this._resolveSessionPath(sessionId)
+    const {filepath: sessionFilepath, filename: sessionFilename} =
+      this._resolveSessionPath(sessionId)
     const {state, saveCreds} = await useMultiFileAuthState(sessionFilepath)
     // fetch latest version of WA Web
     const {version, isLatest} = await fetchLatestBaileysVersion()
@@ -94,7 +96,7 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
     const options: UserFacingSocketConfig = this._getSocketConfig({
       auth: {
         creds: state.creds,
-        keys: makeCacheableSignalKeyStore(state.keys, this._pinoLogger),
+        keys: makeCacheableSignalKeyStore(state.keys, this._pinoLogger.logger),
       },
       version: version,
     })
@@ -103,12 +105,11 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
     if (!this._store) {
       const storeFilepath = path.join(
         this.config.STORE_PATH,
-        sessionFilepath,
-        'store.json',
+        `${sessionFilename}.json`,
       )
-      this._store = makeInMemoryStore({logger: this._pinoLogger})
+      this._store = makeInMemoryStore({logger: this._pinoLogger.logger})
       this._store.readFromFile(storeFilepath)
-      setInterval(10_000, () => this._store!.writeToFile(storeFilepath))
+      setInterval(() => this._store!.writeToFile(storeFilepath), 10_000)
     }
     this._store.bind(socket.ev)
 
@@ -269,7 +270,7 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
       return session
     }
 
-    const sessionFilepath = this._resolveSessionPath(sessionId)
+    const {filepath: sessionFilepath} = this._resolveSessionPath(sessionId)
 
     if (!existsSync(sessionFilepath)) {
       this._logger.debug(`Session path: ${sessionFilepath} is not exists.`)
@@ -367,7 +368,7 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
       Partial<UserFacingSocketConfig>,
   >(config: C): UserFacingSocketConfig {
     return {
-      logger: this._logger,
+      logger: this._pinoLogger.logger,
       markOnlineOnConnect: false,
       syncFullHistory: false,
       shouldIgnoreJid: jid => !isJidUser(jid),
@@ -395,7 +396,7 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
     const filenameFormat = 'md_{session_encode}_session'
     const filename = filenameFormat.replace('{session_encode}', sessionEncoded)
     const filepath = this._getSessionPath(filename)
-    return filepath
+    return {filename, filepath}
   }
 
   private _getSessionPath(filename: string): string {

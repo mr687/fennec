@@ -71,11 +71,8 @@ export class WhatsappBaileysService
       }
       return result
     }
-
     const result = await retryable()
-
     // this.endSessionOnReady(result.id, result.status)
-
     return result
   }
 
