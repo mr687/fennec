@@ -4,9 +4,11 @@ const webpack = require('webpack')
 
 const NodeExternalsPlugin = require('webpack-node-externals')
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
-const { RunScriptWebpackPlugin } = require('run-script-webpack-plugin')
+const {RunScriptWebpackPlugin} = require('run-script-webpack-plugin')
 
-const isProduction = typeof process.env.NODE_ENV !== undefined && process.env.NODE_ENV === 'production'
+const isProduction =
+  typeof process.env.NODE_ENV !== undefined &&
+  process.env.NODE_ENV === 'production'
 const mode = isProduction ? 'production' : 'development'
 const devtool = isProduction ? false : 'inline-source-map'
 
@@ -41,7 +43,7 @@ module.exports = {
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
     alias: {
-      src: path.resolve(__dirname, 'src'),
+      '@': path.resolve(__dirname, 'src'),
     },
   },
   plugins: [
@@ -52,7 +54,7 @@ module.exports = {
     new ForkTsCheckerWebpackPlugin({
       async: !isProduction,
     }),
-    new RunScriptWebpackPlugin({ name: 'server.js', autoRestart: false }),
+    new RunScriptWebpackPlugin({name: 'server.js', autoRestart: false}),
     // new webpack.DefinePlugin({
     //   CONFIG: JSON.stringify(require('config')),
     // }),

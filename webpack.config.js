@@ -1,10 +1,11 @@
 const path = require('path')
 
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin')
-const webpack = require('webpack')
 const NodeExternalsPlugin = require('webpack-node-externals')
 
-const isProduction = typeof process.env.NODE_ENV !== undefined && process.env.NODE_ENV === 'production'
+const isProduction =
+  typeof process.env.NODE_ENV !== undefined &&
+  process.env.NODE_ENV === 'production'
 const mode = isProduction ? 'production' : 'development'
 const devtool = isProduction ? false : 'inline-source-map'
 
@@ -32,7 +33,7 @@ module.exports = {
   resolve: {
     extensions: ['.tsx', '.ts', '.js'],
     alias: {
-      src: path.resolve(__dirname, 'src'),
+      '@': path.resolve(__dirname, 'src'),
     },
   },
   plugins: [
