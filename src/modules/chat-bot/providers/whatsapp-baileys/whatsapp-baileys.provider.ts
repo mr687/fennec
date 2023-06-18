@@ -1,19 +1,17 @@
 import { existsSync } from 'fs'
 
-import makeWASocket, {
-  Browsers,
-  Contact,
-  DisconnectReason,
-  MessageRetryMap,
-  UserFacingSocketConfig,
-  fetchLatestBaileysVersion,
-  fetchLatestWaWebVersion,
-  useMultiFileAuthState,
-} from '@adiwajshing/baileys'
 import { Boom } from '@hapi/boom'
 import { Injectable } from '@nestjs/common'
 import { ConfigService } from '@nestjs/config'
 import { InjectConnection } from '@nestjs/mongoose'
+import makeWASocket, {
+  Browsers,
+  Contact,
+  DisconnectReason,
+  UserFacingSocketConfig,
+  fetchLatestBaileysVersion,
+  useMultiFileAuthState,
+} from '@whiskeysockets/baileys'
 import { useMongoConversation } from 'baileys-conversation'
 import { Connection } from 'mongoose'
 import { toDataURL } from 'qrcode'
@@ -35,7 +33,6 @@ import { WhatsappBaileysSession } from './whatsapp-baileys.session'
 export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysConfig> {
   private _retries: Map<WhatsappBaileysSessionId, number> = new Map()
   private _sessions: Map<WhatsappBaileysSessionId, WhatsappBaileysSession> = new Map()
-  private _msgRetryCounterMap: MessageRetryMap = {}
 
   public constructor(
     private readonly configService: ConfigService,
@@ -74,14 +71,13 @@ export class WhatsappBaileysProvider extends ProviderContract<WhatsappBaileysCon
     const { state, saveCreds } = await useMultiFileAuthState(sessionFilepath)
 
     // fetch latest version of WA Web
-    const { version, isLatest } = await fetchLatestWaWebVersion({})
+    const { version, isLatest } = await fetchLatestBaileysVersion()
     this.log.debug(`using WA v${version.join('.')}, isLatest: ${isLatest}`)
 
     const options: UserFacingSocketConfig = {
       ...this.getDefaultSocketConfig(),
       auth: state,
       version,
-      msgRetryCounterMap: this._msgRetryCounterMap,
     }
 
     const socket = makeWASocket(options)

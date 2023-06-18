@@ -1,5 +1,5 @@
-import { AnyMessageContent } from '@adiwajshing/baileys'
 import { ForbiddenException, Injectable } from '@nestjs/common'
+import { AnyMessageContent } from '@whiskeysockets/baileys'
 
 import { ServiceContract, delay, delayWithCallback } from 'src/shared'
 

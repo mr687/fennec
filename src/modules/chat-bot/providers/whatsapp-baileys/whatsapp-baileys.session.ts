@@ -1,4 +1,4 @@
-import { Contact } from '@adiwajshing/baileys'
+import { Contact } from '@whiskeysockets/baileys'
 import { isUndefined } from 'lodash'
 
 import { IWhatsappBaileysSession, WhatsappBaileysSessionStatus, WhatsappBaileysSocket } from './whatsapp-baileys.dto'

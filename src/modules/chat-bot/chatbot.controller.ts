@@ -5,10 +5,10 @@ import { Body, Controller, Get, Post, Query, StreamableFile, UsePipes } from '@n
 
 import { ApiControllerContract, RequestValidation } from 'src/shared'
 
-import { Authorize } from '../auth'
-import { LoggerService } from '../logger/logger.service'
 import { ChatBotService } from './chatbot.service'
 import { SendMessageOtpDto } from './dto'
+import { Authorize } from '../auth'
+import { LoggerService } from '../logger/logger.service'
 
 @Controller('/modules/chat-bot')
 @Authorize()

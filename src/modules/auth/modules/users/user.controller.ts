@@ -10,11 +10,11 @@ import {
   RequestValidation,
 } from 'src/shared'
 
-import { Authorize } from '../../auth.decorator'
 import { CreateUserDto } from './dto/create-user.dto'
 import { UpdateUserDto } from './dto/update-user.dto'
 import { User } from './user.schema'
 import { UserService } from './user.service'
+import { Authorize } from '../../auth.decorator'
 
 @ApiTags('users')
 @Controller('/modules/users')

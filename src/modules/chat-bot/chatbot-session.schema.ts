@@ -1,5 +1,5 @@
-import { Contact } from '@adiwajshing/baileys'
 import { Prop, Schema } from '@nestjs/mongoose'
+import { Contact } from '@whiskeysockets/baileys'
 import { HydratedDocument, Types } from 'mongoose'
 
 import { CustomSchemaFactory } from 'src/shared/factory/schema.factory'

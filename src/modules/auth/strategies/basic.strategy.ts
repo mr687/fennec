@@ -5,8 +5,8 @@ import { Strategy } from 'passport-custom'
 
 import { parseBasicTokenFromRequestHeader } from 'src/shared'
 
-import { AuthService } from '../auth.service'
 import { PassportStrategyEnum } from './enum.strategy'
+import { AuthService } from '../auth.service'
 
 @Injectable()
 export class BasicStrategy extends PassportStrategy(Strategy, PassportStrategyEnum.BasicStrategy) {
