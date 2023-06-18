@@ -1,4 +1,4 @@
-import makeWASocket, { Contact } from '@whiskeysockets/baileys'
+import makeWASocket, {Contact} from '@whiskeysockets/baileys'
 
 export type WhatsappBaileysSessionId = string
 export type WhatsappBaileysConfig = {

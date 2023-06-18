@@ -1,7 +1,11 @@
-import { HttpStatus } from '@nestjs/common'
+import {HttpStatus} from '@nestjs/common'
 
-import { ControllerContract } from './controller.contract'
-import { ApiDataResponse, ApiMetadataResponse, ApiResponse } from './response.contract'
+import {ControllerContract} from './controller.contract'
+import {
+  ApiDataResponse,
+  ApiMetadataResponse,
+  ApiResponse,
+} from './response.contract'
 
 export interface PaginateDto {
   perPage: number
@@ -10,7 +14,7 @@ export interface PaginateDto {
   sort: 'desc' | 'asc'
 }
 
-export type CommonIdDto = { id: string }
+export type CommonIdDto = {id: string}
 
 export type ApiGetAllDto = PaginateDto
 
@@ -49,7 +53,9 @@ export abstract class ApiControllerContract extends ControllerContract {
     return this._response
   }
 
-  protected respondCreated<T = any>(data: ApiDataResponse['data']): ApiResponse<T> {
+  protected respondCreated<T = any>(
+    data: ApiDataResponse['data'],
+  ): ApiResponse<T> {
     return this.respond(data, {
       statusCode: HttpStatus.CREATED,
       message: 'Data successfully created.',
@@ -57,11 +63,11 @@ export abstract class ApiControllerContract extends ControllerContract {
   }
 
   protected respondPaginated<T = any>(
-    response: { totalData: number; data: T },
-    params: { page: number; perPage: number },
+    response: {totalData: number; data: T},
+    params: {page: number; perPage: number},
   ): ApiResponse<T> {
-    const { totalData, data } = response
-    const { page = 1, perPage = 10 } = params
+    const {totalData, data} = response
+    const {page = 1, perPage = 10} = params
 
     return this.respond(data, {
       statusCode: HttpStatus.OK,

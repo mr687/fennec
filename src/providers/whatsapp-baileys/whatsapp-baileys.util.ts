@@ -1,4 +1,7 @@
-export const formatPhoneNumber = (phoneNumber: string, type: 'group' | 'individual' = 'individual') => {
+export const formatPhoneNumber = (
+  phoneNumber: string,
+  type: 'group' | 'individual' = 'individual',
+) => {
   const suffixes = {
     individual: '@s.whatsapp.net',
     group: '@g.us',

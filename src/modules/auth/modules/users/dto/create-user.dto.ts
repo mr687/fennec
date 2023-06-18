@@ -1,6 +1,6 @@
-import { IsEmail, IsString, MaxLength, MinLength } from 'class-validator'
+import {IsEmail, IsString, MaxLength, MinLength} from 'class-validator'
 
-import { UserDto, UserType } from './user.dto'
+import {UserDto, UserType} from './user.dto'
 
 export class CreateUserDto implements UserDto {
   @IsString()
