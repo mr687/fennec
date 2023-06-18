@@ -1,9 +1,8 @@
-import { ClientSession, Model } from 'mongoose'
+import {ClientSession, Model} from 'mongoose'
 
-import { PaginateDto } from './api-controller.contract'
-import { UseLogger } from './logger.contract'
+import {PaginateDto} from './api-controller.contract'
 
-export abstract class ServiceContract<Doc = unknown> extends UseLogger {
+export abstract class ServiceContract<Doc = unknown> {
   private _model: Model<Doc> | undefined
 
   protected name: string = ServiceContract.name
@@ -11,7 +10,6 @@ export abstract class ServiceContract<Doc = unknown> extends UseLogger {
   public mongoSession: ClientSession | undefined
 
   public constructor(model?: Model<Doc>) {
-    super()
     this._model = model
   }
 
@@ -24,7 +22,9 @@ export abstract class ServiceContract<Doc = unknown> extends UseLogger {
       [column]: value,
     }
 
-    const doc = await this.model.findOne(query).session(this.mongoSession || null)
+    const doc = await this.model
+      .findOne(query)
+      .session(this.mongoSession || null)
     return doc
   }
 
@@ -41,7 +41,7 @@ export abstract class ServiceContract<Doc = unknown> extends UseLogger {
   }
 
   protected buildPaginateQuery(params: PaginateDto, query = {}) {
-    const { perPage = 10, page = 1 } = params
+    const {perPage = 10, page = 1} = params
 
     return this.model
       .find(query)

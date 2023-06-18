@@ -1,27 +1,32 @@
-import { ArgumentMetadata, HttpException, HttpStatus, Injectable, PipeTransform, ValidationError } from '@nestjs/common'
-import { plainToClass } from 'class-transformer'
-import { getMetadataStorage, validate } from 'class-validator'
+import {
+  ArgumentMetadata,
+  HttpException,
+  HttpStatus,
+  Injectable,
+  PipeTransform,
+  ValidationError,
+} from '@nestjs/common'
+import {plainToClass} from 'class-transformer'
+import {getMetadataStorage, validate} from 'class-validator'
 
 @Injectable()
 export class RequestValidation implements PipeTransform<unknown> {
   async transform(value: unknown, metadata: ArgumentMetadata) {
     if (value instanceof Object && this.isEmptyObject(value)) {
-      throw new HttpException('Validation Failed: No data submitted for body', HttpStatus.BAD_REQUEST)
+      throw new HttpException(
+        'Validation Failed: No data submitted for body',
+        HttpStatus.BAD_REQUEST,
+      )
     }
-
-    const { metatype } = metadata
-
+    const {metatype} = metadata
     if (!metatype || !this.toValidate(metatype)) {
       return value
     }
-
     if (value instanceof Object) {
       value = this.normalizeObjectValues(value)
     }
-
     const object = plainToClass(metatype, value)
-    const errors = await validate(object, { forbidUnknownValues: true })
-
+    const errors = await validate(object, {forbidUnknownValues: true})
     if (errors.length) {
       throw new HttpException(
         {
@@ -31,13 +36,17 @@ export class RequestValidation implements PipeTransform<unknown> {
         HttpStatus.UNPROCESSABLE_ENTITY,
       )
     }
-
     const validatedValues = this.getValidatedValues(object, value)
     return validatedValues
   }
 
   private getValidatedValues(target: any, value: any) {
-    const targetMetadatas = getMetadataStorage().getTargetValidationMetadatas(target.constructor, '', false, false)
+    const targetMetadatas = getMetadataStorage().getTargetValidationMetadatas(
+      target.constructor,
+      '',
+      false,
+      false,
+    )
     const validatedValues: any = {}
 
     targetMetadatas.forEach(x => {

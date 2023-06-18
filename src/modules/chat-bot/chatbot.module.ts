@@ -1,24 +1,20 @@
-import { BullModule } from '@nestjs/bull'
-import { Module } from '@nestjs/common'
-import { MongooseModule } from '@nestjs/mongoose'
+import {Module} from '@nestjs/common'
 
-import { WhatsappBaileysModule } from 'src/modules/chat-bot/providers/whatsapp-baileys'
+import {registerMongooseFeature} from '@/core/config'
+import {registerBullBoardFeature} from '@/core/config/bull/bull-board.config'
+import {registerBullQueue} from '@/core/config/bull/bull.config'
+import {WhatsappBaileysModule} from '@/providers/whatsapp-baileys/whatsapp-baileys.module'
 
-import { ChatBotSession, ChatBotSessionSchema } from './chatbot-session.schema'
-import { ChatBotController } from './chatbot.controller'
-import { ChatBotProcessor } from './chatbot.processor'
-import { ChatBotService } from './chatbot.service'
+import {ChatBotSession, ChatBotSessionSchema} from './chatbot-session.schema'
+import {ChatBotController} from './chatbot.controller'
+import {CHATBOT_QUEUE_NAME, ChatBotProcessor} from './chatbot.processor'
+import {ChatBotService} from './chatbot.service'
 
 @Module({
   imports: [
-    MongooseModule.forFeature([{ name: ChatBotSession.name, schema: ChatBotSessionSchema }]),
-    BullModule.registerQueue({
-      name: 'chat-bot',
-      defaultJobOptions: {
-        removeOnComplete: true,
-        removeOnFail: false,
-      },
-    }),
+    registerMongooseFeature(ChatBotSession.name, ChatBotSessionSchema),
+    registerBullQueue(CHATBOT_QUEUE_NAME),
+    registerBullBoardFeature(CHATBOT_QUEUE_NAME),
     WhatsappBaileysModule,
   ],
   controllers: [ChatBotController],

@@ -1,26 +1,31 @@
-import { Injectable } from '@nestjs/common'
-import { PassportStrategy } from '@nestjs/passport'
-import { Request } from 'express'
-import { Strategy } from 'passport-custom'
+import {IncomingMessage} from 'http'
 
-import { parseBasicTokenFromRequestHeader } from 'src/shared'
+import {Injectable} from '@nestjs/common'
+import {PassportStrategy} from '@nestjs/passport'
+import {Strategy} from 'passport-custom'
 
-import { AuthService } from '../auth.service'
-import { PassportStrategyEnum } from './enum.strategy'
+import {parseBasicTokenFromRequestHeader} from '@/shared/utils'
+
+import {PassportStrategyEnum} from './enum.strategy'
+import {AuthService} from '../auth.service'
 
 @Injectable()
-export class BasicStrategy extends PassportStrategy(Strategy, PassportStrategyEnum.BasicStrategy) {
+export class BasicStrategy extends PassportStrategy(
+  Strategy,
+  PassportStrategyEnum.BasicStrategy,
+) {
   public constructor(private authService: AuthService) {
     super()
   }
 
-  public async validate(request: Request): Promise<boolean> {
+  public async validate(request: IncomingMessage): Promise<boolean> {
     const basicToken = parseBasicTokenFromRequestHeader(request)
     if (!basicToken) {
       return false
     }
-
-    const validatedAuthKey = await this.authService.validateAuthBasic(basicToken)
+    const validatedAuthKey = await this.authService.validateAuthBasic(
+      basicToken,
+    )
     return validatedAuthKey !== undefined
   }
 }

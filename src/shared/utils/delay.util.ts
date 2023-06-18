@@ -1,4 +1,4 @@
-import { Callback } from '../types'
+import {Callback} from '../types'
 
 export const delay = (ms: number): Promise<never> => {
   if (ms < 0) {
@@ -7,5 +7,7 @@ export const delay = (ms: number): Promise<never> => {
   return new Promise(resolve => setTimeout(resolve, ms))
 }
 
-export const delayWithCallback = async <T extends Callback>(ms: number, cb: T): Promise<ReturnType<T>> =>
-  delay(ms).then(cb)
+export const delayWithCallback = async <T extends Callback>(
+  ms: number,
+  cb: T,
+): Promise<ReturnType<T>> => delay(ms).then(cb)
