@@ -1,14 +1,14 @@
-import { Request } from 'express'
+import type { IncomingMessage } from 'http'
 
 import { base64ToString } from './string.util'
 
-export const parseAuthorizationHeader = (request: Request) => {
+export const parseAuthorizationHeader = (request: IncomingMessage) => {
   const authorizationHeader = request.headers.authorization
 
   return authorizationHeader
 }
 
-export const parseBearerTokenFromRequestHeader = (request: Request): string | undefined => {
+export const parseBearerTokenFromRequestHeader = (request: IncomingMessage): string | undefined => {
   const authorizationHeader = parseAuthorizationHeader(request)
   const bearerToken = authorizationHeader?.replace(/bearer\s/i, '')
 
@@ -16,7 +16,7 @@ export const parseBearerTokenFromRequestHeader = (request: Request): string | un
 }
 
 export const parseBasicTokenFromRequestHeader = (
-  request: Request,
+  request: IncomingMessage,
 ): { username: string; password: string } | undefined => {
   const authorizationHeader = parseAuthorizationHeader(request)
   const basicTokenEncoded = authorizationHeader?.replace(/basic\s/i, '')

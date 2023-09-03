@@ -17,7 +17,6 @@ export class GeneralGuard extends AuthGuard([PassportStrategyEnum.BasicStrategy]
     if (isAnonymous) {
       return true
     }
-
     return super.canActivate(context)
   }
 }

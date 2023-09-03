@@ -1,6 +1,6 @@
-import { IsPhoneNumber, IsString, MaxLength, maxLength } from 'class-validator'
+import { IsString, MaxLength } from 'class-validator'
 
-import { LoginSessionDto as BaileysLoginSessionDto } from 'src/modules/chat-bot/providers/whatsapp-baileys'
+import { LoginSessionDto as BaileysLoginSessionDto } from '@/providers/whatsapp-baileys'
 
 export class LoginSessionDto implements BaileysLoginSessionDto {
   @IsString()

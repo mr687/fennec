@@ -1,20 +1,17 @@
-import { createReadStream } from 'fs'
-import { join } from 'path'
+import { Body, Controller, Get, Post, Query, UsePipes } from '@nestjs/common'
 
-import { Body, Controller, Get, Post, Query, StreamableFile, UsePipes } from '@nestjs/common'
+import { ApiControllerContract } from '@/shared/contracts'
+import { RequestValidation } from '@/shared/validations'
 
-import { ApiControllerContract, RequestValidation } from 'src/shared'
-
-import { Authorize } from '../auth'
-import { LoggerService } from '../logger/logger.service'
+import { Authorize, Roles } from '../auth'
+import { UserType } from '../auth/modules/users/dto/user.dto'
 import { ChatBotService } from './chatbot.service'
 import { SendMessageOtpDto } from './dto'
 
 @Controller('/modules/chat-bot')
 @Authorize()
+@Roles(UserType.Client)
 export class ChatBotController extends ApiControllerContract {
-  private readonly logger = new LoggerService(ChatBotController.name)
-
   public constructor(protected readonly whatsappBotApiService: ChatBotService) {
     super()
   }

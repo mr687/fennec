@@ -8,20 +8,15 @@ export class RequestValidation implements PipeTransform<unknown> {
     if (value instanceof Object && this.isEmptyObject(value)) {
       throw new HttpException('Validation Failed: No data submitted for body', HttpStatus.BAD_REQUEST)
     }
-
     const { metatype } = metadata
-
     if (!metatype || !this.toValidate(metatype)) {
       return value
     }
-
     if (value instanceof Object) {
       value = this.normalizeObjectValues(value)
     }
-
     const object = plainToClass(metatype, value)
     const errors = await validate(object, { forbidUnknownValues: true })
-
     if (errors.length) {
       throw new HttpException(
         {
@@ -31,7 +26,6 @@ export class RequestValidation implements PipeTransform<unknown> {
         HttpStatus.UNPROCESSABLE_ENTITY,
       )
     }
-
     const validatedValues = this.getValidatedValues(object, value)
     return validatedValues
   }
