@@ -1,6 +1,6 @@
-import {ClientSession, Model} from 'mongoose'
+import { ClientSession, Model } from 'mongoose'
 
-import {PaginateDto} from './api-controller.contract'
+import { PaginateDto } from './api-controller.contract'
 
 export abstract class ServiceContract<Doc = unknown> {
   private _model: Model<Doc> | undefined
@@ -22,9 +22,7 @@ export abstract class ServiceContract<Doc = unknown> {
       [column]: value,
     }
 
-    const doc = await this.model
-      .findOne(query)
-      .session(this.mongoSession || null)
+    const doc = await this.model.findOne(query).session(this.mongoSession || null)
     return doc
   }
 
@@ -41,7 +39,7 @@ export abstract class ServiceContract<Doc = unknown> {
   }
 
   protected buildPaginateQuery(params: PaginateDto, query = {}) {
-    const {perPage = 10, page = 1} = params
+    const { perPage = 10, page = 1 } = params
 
     return this.model
       .find(query)

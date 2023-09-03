@@ -1,10 +1,10 @@
-import {Module} from '@nestjs/common'
-import {MongooseModule} from '@nestjs/mongoose'
-import {hash} from 'bcrypt'
+import { Module } from '@nestjs/common'
+import { MongooseModule } from '@nestjs/mongoose'
+import { hash } from 'bcrypt'
 
-import {UserController} from './user.controller'
-import {User, UserSchema} from './user.schema'
-import {UserService} from './user.service'
+import { UserController } from './user.controller'
+import { User, UserSchema } from './user.schema'
+import { UserService } from './user.service'
 
 @Module({
   imports: [

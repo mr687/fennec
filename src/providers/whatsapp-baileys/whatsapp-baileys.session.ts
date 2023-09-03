@@ -1,11 +1,7 @@
-import {Contact} from '@whiskeysockets/baileys'
-import {isUndefined} from 'lodash'
+import { Contact } from '@whiskeysockets/baileys'
+import { isUndefined } from 'lodash'
 
-import {
-  IWhatsappBaileysSession,
-  WhatsappBaileysSessionStatus,
-  WhatsappBaileysSocket,
-} from './whatsapp-baileys.dto'
+import { IWhatsappBaileysSession, WhatsappBaileysSessionStatus, WhatsappBaileysSocket } from './whatsapp-baileys.dto'
 
 export class WhatsappBaileysSession implements IWhatsappBaileysSession {
   public socket: WhatsappBaileysSocket
@@ -14,14 +10,14 @@ export class WhatsappBaileysSession implements IWhatsappBaileysSession {
   public connected?: boolean
   public status?: WhatsappBaileysSessionStatus
   public user?: Contact
-  public qr?: {type: 'base64'; data: string}
+  public qr?: { type: 'base64'; data: string }
 
   public constructor(data: IWhatsappBaileysSession) {
     this.syncData(data)
   }
 
   public syncData(data: IWhatsappBaileysSession) {
-    const {socket, isNew, connected, status, id, qr, user} = data
+    const { socket, isNew, connected, status, id, qr, user } = data
     this.socket = socket
     this.id = id
 

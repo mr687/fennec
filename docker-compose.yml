@@ -1,0 +1,21 @@
+version: '3.8'
+
+services:
+  server:
+    container_name: fennec-server
+    image: fennec-server
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - 3000:3000
+    volumes:
+      - ./storage:/app/storage
+      - ./creds.txt:/app/creds.txt
+    environment:
+      - MONGO_URI=${MONGO_URI}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - REDIS_PREFIX=${REDIS_PREFIX}
+    restart: unless-stopped

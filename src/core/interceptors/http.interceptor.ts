@@ -1,21 +1,12 @@
-import {IncomingMessage, ServerResponse} from 'http'
+import { IncomingMessage, ServerResponse } from 'http'
 
-import {
-  CallHandler,
-  ExecutionContext,
-  Injectable,
-  Logger,
-  NestInterceptor,
-} from '@nestjs/common'
-import {Observable, tap} from 'rxjs'
+import { CallHandler, ExecutionContext, Injectable, Logger, NestInterceptor } from '@nestjs/common'
+import { Observable, tap } from 'rxjs'
 
 @Injectable()
 export class HttpInterceptor implements NestInterceptor {
   private readonly logger = new Logger(HttpInterceptor.name)
-  intercept(
-    context: ExecutionContext,
-    next: CallHandler<any>,
-  ): Observable<any> | Promise<Observable<any>> {
+  intercept(context: ExecutionContext, next: CallHandler<any>): Observable<any> | Promise<Observable<any>> {
     const now = Date.now()
     const request = context.switchToHttp().getRequest<IncomingMessage>()
     request.headers.date = `${now}`

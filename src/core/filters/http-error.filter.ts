@@ -1,15 +1,6 @@
-import {IncomingMessage, ServerResponse} from 'http'
+import { ArgumentsHost, Catch, ExceptionFilter, HttpException, Injectable, Logger } from '@nestjs/common'
 
-import {
-  ArgumentsHost,
-  Catch,
-  ExceptionFilter,
-  HttpException,
-  Injectable,
-  Logger,
-} from '@nestjs/common'
-
-import {ApiResponse} from '@/shared/contracts'
+import { ApiResponse } from '@/shared/contracts'
 
 @Catch(HttpException)
 @Injectable()
@@ -18,8 +9,8 @@ export class HttpErrorFilter implements ExceptionFilter<HttpException> {
 
   public catch(exception: HttpException, host: ArgumentsHost) {
     const ctx = host.switchToHttp()
-    const request = ctx.getRequest<IncomingMessage>()
-    const response = ctx.getResponse<ServerResponse>()
+    const request = ctx.getRequest()
+    const response = ctx.getResponse()
     const status = exception.getStatus()
     const errorMessage = exception.message
     let errors = null
@@ -36,12 +27,7 @@ export class HttpErrorFilter implements ExceptionFilter<HttpException> {
       },
     }
     const diff = Date.now() - +(request.headers.date ?? 0)
-    this.logger.error(
-      `${request.method} ${request.url} ${status} ${errorMessage} ${diff}ms`,
-    )
-    response.statusCode = status
-    response.setHeader('Content-Type', 'application/json')
-    response.write(JSON.stringify(errorResponse))
-    response.end()
+    this.logger.error(`${request.method} ${request.url} ${status} ${errorMessage} ${diff}ms`)
+    return response.status(status).send(errorResponse)
   }
 }

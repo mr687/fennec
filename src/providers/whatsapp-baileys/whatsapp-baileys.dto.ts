@@ -1,4 +1,4 @@
-import makeWASocket, {Contact} from '@whiskeysockets/baileys'
+import makeWASocket, { Contact } from '@whiskeysockets/baileys'
 
 export type WhatsappBaileysSessionId = string
 export type WhatsappBaileysConfig = {
@@ -59,6 +59,7 @@ export type SendMessageOtpDto = ReceiverDto & {
 export type ResponseSendMessageDto = ReceiverDto & {
   status: boolean
   message: string
+  errorCode?: any
 }
 
 export type CheckPhoneNumberDto = {

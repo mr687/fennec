@@ -1,14 +1,16 @@
-import {Body, Controller, Get, Post, Query, UsePipes} from '@nestjs/common'
+import { Body, Controller, Get, Post, Query, UsePipes } from '@nestjs/common'
 
-import {ApiControllerContract} from '@/shared/contracts'
-import {RequestValidation} from '@/shared/validations'
+import { ApiControllerContract } from '@/shared/contracts'
+import { RequestValidation } from '@/shared/validations'
 
-import {ChatBotService} from './chatbot.service'
-import {SendMessageOtpDto} from './dto'
-import {Authorize} from '../auth'
+import { Authorize, Roles } from '../auth'
+import { UserType } from '../auth/modules/users/dto/user.dto'
+import { ChatBotService } from './chatbot.service'
+import { SendMessageOtpDto } from './dto'
 
 @Controller('/modules/chat-bot')
 @Authorize()
+@Roles(UserType.Client)
 export class ChatBotController extends ApiControllerContract {
   public constructor(protected readonly whatsappBotApiService: ChatBotService) {
     super()

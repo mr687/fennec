@@ -1,6 +1,6 @@
-import {IsString, MaxLength} from 'class-validator'
+import { IsString, MaxLength } from 'class-validator'
 
-import {LoginSessionDto as BaileysLoginSessionDto} from '@/providers/whatsapp-baileys'
+import { LoginSessionDto as BaileysLoginSessionDto } from '@/providers/whatsapp-baileys'
 
 export class LoginSessionDto implements BaileysLoginSessionDto {
   @IsString()

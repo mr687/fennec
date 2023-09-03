@@ -1,9 +1,9 @@
-import {Module} from '@nestjs/common'
+import { Module } from '@nestjs/common'
 
-import {registerLogger} from '@/core/config'
+import { registerLogger } from '@/core/config'
 
-import {WhatsappBaileysProvider} from './whatsapp-baileys.provider'
-import {WhatsappBaileysService} from './whatsapp-baileys.service'
+import { WhatsappBaileysProvider } from './whatsapp-baileys.provider'
+import { WhatsappBaileysService } from './whatsapp-baileys.service'
 
 @Module({
   imports: [registerLogger()],

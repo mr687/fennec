@@ -1,8 +1,7 @@
-import {BullModule} from '@nestjs/bull'
-import {ConfigService} from '@nestjs/config'
+import { BullModule } from '@nestjs/bull'
+import { ConfigService } from '@nestjs/config'
 
-export const registerBullQueue = (name: string) =>
-  BullModule.registerQueue({name: name})
+export const registerBullQueue = (name: string) => BullModule.registerQueue({ name: name })
 
 export const registerBull = () =>
   BullModule.forRootAsync({
@@ -10,8 +9,7 @@ export const registerBull = () =>
     useFactory: (configService: ConfigService) => ({
       prefix: configService.get<string>('REDIS_PREFIX', 'nestjs-bull'),
       defaultJobOptions: {
-        removeOnComplete:
-          configService.get<string>('NODE_ENV', 'development') === 'production',
+        removeOnComplete: configService.get<string>('NODE_ENV', 'development') === 'production',
         removeOnFail: false,
         delay: 1000,
         attempts: 3,
@@ -23,8 +21,7 @@ export const registerBull = () =>
       limiter: {
         max: configService.get<number>('BULL_MAX', 1000),
         duration: configService.get<number>('BULL_DURATION', 5000),
-        bounceBack:
-          configService.get<string>('BULL_BOUNCE_BACK', 'true') === 'true',
+        bounceBack: configService.get<string>('BULL_BOUNCE_BACK', 'true') === 'true',
       },
       redis: {
         host: configService.get<string>('REDIS_HOST', '127.0.0.1'),

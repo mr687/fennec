@@ -1,8 +1,8 @@
-import {ConfigService} from '@nestjs/config'
-import {MongooseModule} from '@nestjs/mongoose'
+import { ConfigService } from '@nestjs/config'
+import { MongooseModule } from '@nestjs/mongoose'
 
 export const registerMongooseFeature = (name: string, schema: any) =>
-  MongooseModule.forFeature([{name: name, schema: schema}])
+  MongooseModule.forFeature([{ name: name, schema: schema }])
 
 export const registerMongoose = () =>
   MongooseModule.forRootAsync({

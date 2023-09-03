@@ -1,20 +1,18 @@
-import {Module} from '@nestjs/common'
+import { Module } from '@nestjs/common'
 
-import {registerMongooseFeature} from '@/core/config'
-import {registerBullBoardFeature} from '@/core/config/bull/bull-board.config'
-import {registerBullQueue} from '@/core/config/bull/bull.config'
-import {WhatsappBaileysModule} from '@/providers/whatsapp-baileys/whatsapp-baileys.module'
+import { registerMongooseFeature } from '@/core/config'
+import { registerBullQueue } from '@/core/config/bull.config'
+import { WhatsappBaileysModule } from '@/providers/whatsapp-baileys/whatsapp-baileys.module'
 
-import {ChatBotSession, ChatBotSessionSchema} from './chatbot-session.schema'
-import {ChatBotController} from './chatbot.controller'
-import {CHATBOT_QUEUE_NAME, ChatBotProcessor} from './chatbot.processor'
-import {ChatBotService} from './chatbot.service'
+import { ChatBotSession, ChatBotSessionSchema } from './chatbot-session.schema'
+import { ChatBotController } from './chatbot.controller'
+import { CHATBOT_QUEUE_NAME, ChatBotProcessor } from './chatbot.processor'
+import { ChatBotService } from './chatbot.service'
 
 @Module({
   imports: [
     registerMongooseFeature(ChatBotSession.name, ChatBotSessionSchema),
     registerBullQueue(CHATBOT_QUEUE_NAME),
-    registerBullBoardFeature(CHATBOT_QUEUE_NAME),
     WhatsappBaileysModule,
   ],
   controllers: [ChatBotController],
