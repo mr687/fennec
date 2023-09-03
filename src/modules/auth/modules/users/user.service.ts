@@ -31,7 +31,7 @@ export class UserService extends ServiceContract<UserDoc> implements OnApplicati
         secretKey: randomPassword(),
         type: UserType.Admin,
       }
-      writeFileSync('creds.txt', JSON.stringify(creds, null, 2))
+      writeFileSync('./storage/creds.txt', JSON.stringify(creds, null, 2))
       await this.create(creds)
     }
   }
