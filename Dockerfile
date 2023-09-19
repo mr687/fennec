@@ -17,6 +17,7 @@ RUN pnpm run build
 # Production state
 FROM base as server
 
+ENV NO_COLOR=true
 ENV NODE_ENV=production
 ENV PORT=3000
 ENV HOST="0.0.0.0"
@@ -24,10 +25,8 @@ ENV HOST="0.0.0.0"
 ENV LOG_LEVEL=debug
 ENV LOG_PRETTY=false
 
-RUN addgroup --system --gid 1001 mr687
-RUN adduser --system --uid 1001 fennec
-COPY --from=prod-deps --chown=fennec:mr687 /app/node_modules ./node_modules
-COPY --from=build --chown=fennec:mr687 /app/dist ./
-USER fennec
+COPY --from=prod-deps /app/node_modules ./node_modules
+COPY --from=build /app/dist ./
+
 EXPOSE 3000
 CMD ["node", "server.js"]
